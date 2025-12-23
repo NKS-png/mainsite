@@ -1,0 +1,1873 @@
+---
+import { supabase } from '../lib/supabase';
+import { createSupabaseServerClient } from '../lib/supabase';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+// Check admin authentication
+const serverSupabase = createSupabaseServerClient(Astro.cookies);
+if (!serverSupabase) {
+  console.error('Failed to create server Supabase client');
+  return Astro.redirect('/login?error=auth_required');
+}
+
+// Try multiple methods to get the user
+let user = null;
+let userIsAdmin = false;
+let authMethod = '';
+
+// Method 1: Try getSession
+try {
+  const { data: { session }, error: sessionError } = await serverSupabase.auth.getSession();
+  if (session && session.user) {
+    user = session.user;
+    authMethod = 'session';
+    console.log('User authenticated via session:', user.email);
+  }
+} catch (e) {
+  console.log('Session method failed:', e);
+}
+
+// Method 2: Try getUser directly
+if (!user) {
+  try {
+    const { data: { user: userData }, error: userError } = await serverSupabase.auth.getUser();
+    if (userData) {
+      user = userData;
+      authMethod = 'getUser';
+      console.log('User authenticated via getUser:', user.email);
+    }
+  } catch (e) {
+    console.log('getUser method failed:', e);
+  }
+}
+
+// Method 3: Check for custom user session cookie
+if (!user) {
+  const userSessionCookie = Astro.cookies.get('user_session');
+  if (userSessionCookie && userSessionCookie.value) {
+    try {
+      const userData = JSON.parse(userSessionCookie.value);
+      user = {
+        id: userData.id,
+        email: userData.email,
+        // Add other required user properties
+      };
+      userIsAdmin = userData.isAdmin || false;
+      authMethod = 'custom_cookie';
+      console.log('User authenticated via custom cookie:', user.email, 'isAdmin:', userIsAdmin);
+    } catch (e) {
+      console.log('Custom cookie parsing failed:', e);
+    }
+  }
+}
+
+// Method 4: Check for session cookie manually and try refresh
+if (!user) {
+  const sessionCookie = Astro.cookies.get('sb-avmiweumvpveykxtamfm-auth-token');
+  if (sessionCookie && sessionCookie.value) {
+    console.log('Found session cookie, attempting manual session retrieval');
+    // Try to refresh or re-establish session
+    try {
+      const { data: refreshData, error: refreshError } = await serverSupabase.auth.refreshSession();
+      if (refreshData.session && refreshData.session.user) {
+        user = refreshData.session.user;
+        authMethod = 'refresh';
+        console.log('User authenticated via refresh:', user.email);
+      }
+    } catch (e) {
+      console.log('Refresh method failed:', e);
+    }
+  }
+}
+
+if (!user) {
+  console.error('All authentication methods failed');
+  return Astro.redirect('/login?error=not_authenticated');
+}
+
+// If we got user from custom cookie, we already have isAdmin
+// Otherwise, check admin status
+if (authMethod !== 'custom_cookie') {
+  // Check if user is admin (by email or is_admin flag)
+  const adminEmails = ['nikhil.as.rajpoot@gmail.com']; // Add your admin email(s) here
+  const isAdminByEmail = adminEmails.includes(user.email || '');
+
+  // Try to fetch profile admin status
+  const { data: profile, error: profileError } = await serverSupabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "not found"
+    console.warn('Profile fetch error:', profileError);
+  }
+
+  const isAdminByFlag = profile?.is_admin === true;
+  isAdmin = isAdminByEmail || isAdminByFlag;
+
+  console.log('Admin check - byEmail:', isAdminByEmail, 'byFlag:', isAdminByFlag, 'final:', isAdmin);
+}
+
+if (!userIsAdmin) {
+  console.error('User is not admin:', user.email);
+  return Astro.redirect('/?error=admin_required');
+}
+
+console.log('Final auth method used:', authMethod, 'User:', user.email, 'isAdmin:', userIsAdmin);
+console.log('Admin access granted for:', user.email);
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Admin Dashboard - NKScreates</title>
+		<style>
+			/* Premium Art-Focused UI - Design System & Styles */
+
+			/* CSS Custom Properties (Design Tokens) */
+			:root {
+				/* Colors */
+				--primary-color: #0B79FF;
+				--primary-hover: #0056CC;
+				--secondary-color: #6B7280;
+				--accent-color: #F59E0B;
+
+				/* Background Colors */
+				--bg-primary: #FFFFFF;
+				--bg-secondary: #F9FAFB;
+				--bg-tertiary: #F3F4F6;
+				--bg-dark: #111827;
+				--bg-overlay: rgba(0, 0, 0, 0.8);
+
+				/* Text Colors */
+				--text-primary: #111827;
+				--text-secondary: #6B7280;
+				--text-tertiary: #9CA3AF;
+				--text-inverse: #FFFFFF;
+				--text-accent: #0B79FF;
+
+				/* Border Colors */
+				--border-color: #E5E7EB;
+				--border-hover: #D1D5DB;
+
+				/* Shadows */
+				--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+				--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+				--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+				--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+				--shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+				/* Typography */
+				--font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				--font-size-xs: 0.75rem;
+				--font-size-sm: 0.875rem;
+				--font-size-base: 1rem;
+				--font-size-lg: 1.125rem;
+				--font-size-xl: 1.25rem;
+				--font-size-2xl: 1.5rem;
+				--font-size-3xl: 1.875rem;
+				--font-size-4xl: 2.25rem;
+				--font-size-5xl: 3rem;
+				--font-size-6xl: 3.75rem;
+				--font-size-7xl: 4.5rem;
+
+				--font-weight-light: 300;
+				--font-weight-normal: 400;
+				--font-weight-medium: 500;
+				--font-weight-semibold: 600;
+				--font-weight-bold: 700;
+				--font-weight-extrabold: 800;
+
+				--line-height-tight: 1.25;
+				--line-height-snug: 1.375;
+				--line-height-normal: 1.5;
+				--line-height-relaxed: 1.625;
+				--line-height-loose: 2;
+
+				/* Spacing */
+				--spacing-1: 0.25rem;
+				--spacing-2: 0.5rem;
+				--spacing-3: 0.75rem;
+				--spacing-4: 1rem;
+				--spacing-5: 1.25rem;
+				--spacing-6: 1.5rem;
+				--spacing-8: 2rem;
+				--spacing-10: 2.5rem;
+				--spacing-12: 3rem;
+				--spacing-16: 4rem;
+				--spacing-20: 5rem;
+				--spacing-24: 6rem;
+
+				/* Border Radius */
+				--radius-sm: 0.125rem;
+				--radius-md: 0.375rem;
+				--radius-lg: 0.5rem;
+				--radius-xl: 0.75rem;
+				--radius-2xl: 1rem;
+				--radius-3xl: 1.5rem;
+				--radius-full: 9999px;
+
+				/* Animations */
+				--transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+				--transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+				--transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+				--easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+				--easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+				/* Z-Index */
+				--z-dropdown: 1000;
+				--z-sticky: 1020;
+				--z-fixed: 1030;
+				--z-modal-backdrop: 1040;
+				--z-modal: 1050;
+				--z-popover: 1060;
+				--z-tooltip: 1070;
+				--z-toast: 1080;
+			}
+
+			/* Dark Theme */
+			[data-theme="dark"] {
+				--bg-primary: #111827;
+				--bg-secondary: #1F2937;
+				--bg-tertiary: #374151;
+				--text-primary: #F9FAFB;
+				--text-secondary: #D1D5DB;
+				--text-tertiary: #9CA3AF;
+				--border-color: #374151;
+				--border-hover: #4B5563;
+			}
+
+			/* Base Styles */
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			html {
+				scroll-behavior: smooth;
+			}
+
+			body {
+				font-family: var(--font-family);
+				font-size: var(--font-size-base);
+				line-height: var(--line-height-normal);
+				color: var(--text-primary);
+				background-color: var(--bg-primary);
+				background-image: radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.03) 0%, transparent 50%);
+				background-size: 100px 100px;
+				overflow-x: hidden;
+				position: relative;
+				min-height: 100vh;
+			}
+
+			body::before {
+				content: '';
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.03) 0%, transparent 50%);
+				pointer-events: none;
+				z-index: -1;
+			}
+
+			/* Typography */
+			h1, h2, h3, h4, h5, h6 {
+				font-weight: var(--font-weight-bold);
+				line-height: var(--line-height-tight);
+				color: var(--text-primary);
+			}
+
+			h1 { font-size: var(--font-size-6xl); }
+			h2 { font-size: var(--font-size-5xl); }
+			h3 { font-size: var(--font-size-3xl); }
+			h4 { font-size: var(--font-size-2xl); }
+			h5 { font-size: var(--font-size-xl); }
+			h6 { font-size: var(--font-size-lg); }
+
+			p {
+				margin-bottom: var(--spacing-4);
+				color: var(--text-secondary);
+			}
+
+			/* Links */
+			a {
+				color: var(--primary-color);
+				text-decoration: none;
+				transition: color var(--transition-fast);
+			}
+
+			a:hover {
+				color: var(--primary-hover);
+			}
+
+			/* Buttons */
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: var(--spacing-2);
+				padding: var(--spacing-3) var(--spacing-6);
+				font-size: var(--font-size-sm);
+				font-weight: var(--font-weight-medium);
+				border-radius: var(--radius-lg);
+				border: 1px solid transparent;
+				cursor: pointer;
+				transition: all var(--transition-fast);
+				text-decoration: none;
+			}
+
+			.btn:focus {
+				outline: 2px solid var(--primary-color);
+				outline-offset: 2px;
+			}
+
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.btn-primary {
+				background-color: var(--primary-color);
+				color: var(--text-inverse);
+				border-color: var(--primary-color);
+			}
+
+			.btn-primary:hover:not(:disabled) {
+				background-color: var(--primary-hover);
+				border-color: var(--primary-hover);
+				transform: translateY(-1px);
+				box-shadow: var(--shadow-lg);
+			}
+
+			/* Simple Admin Layout */
+			.admin-container {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: var(--spacing-8) var(--spacing-6);
+			}
+
+			.admin-header {
+				text-align: center;
+				margin-bottom: var(--spacing-12);
+			}
+
+			.admin-title {
+				font-size: var(--font-size-4xl);
+				font-weight: var(--font-weight-extrabold);
+				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+				margin-bottom: var(--spacing-4);
+			}
+
+			.admin-subtitle {
+				font-size: var(--font-size-lg);
+				color: var(--text-secondary);
+			}
+
+			/* Theme Toggle */
+			.theme-toggle {
+				position: fixed;
+				top: var(--spacing-6);
+				right: var(--spacing-6);
+				width: 44px;
+				height: 44px;
+				border-radius: var(--radius-full);
+				border: 1px solid var(--border-color);
+				background: var(--bg-primary);
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all var(--transition-fast);
+				z-index: var(--z-fixed);
+				box-shadow: var(--shadow-md);
+			}
+
+			.theme-toggle:hover {
+				border-color: var(--border-hover);
+				background: var(--bg-secondary);
+				transform: scale(1.05);
+			}
+
+			.theme-toggle svg {
+				width: 20px;
+				height: 20px;
+				transition: all var(--transition-normal);
+			}
+
+			.theme-toggle .moon-icon {
+				display: none;
+			}
+
+			[data-theme="dark"] .theme-toggle .sun-icon {
+				display: none;
+			}
+
+			[data-theme="dark"] .theme-toggle .moon-icon {
+				display: block;
+				color: white;
+			}
+
+			/* Stats Grid */
+			.stats-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				gap: var(--spacing-8);
+				margin-bottom: var(--spacing-12);
+			}
+
+			.stat-card {
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-2xl);
+				padding: var(--spacing-8);
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-6);
+				transition: all var(--transition-normal);
+				box-shadow: var(--shadow-md);
+				position: relative;
+				overflow: hidden;
+			}
+
+			.stat-card::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: linear-gradient(135deg, rgba(11, 121, 255, 0.05), rgba(245, 158, 11, 0.05));
+				opacity: 0;
+				transition: opacity var(--transition-normal);
+				z-index: -1;
+			}
+
+			.stat-card:hover {
+				transform: translateY(-8px);
+				box-shadow: var(--shadow-xl);
+				border-color: var(--primary-color);
+			}
+
+			.stat-card:hover::before {
+				opacity: 1;
+			}
+
+			.stat-icon {
+				width: 64px;
+				height: 64px;
+				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+				border-radius: var(--radius-xl);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				color: var(--text-inverse);
+				box-shadow: var(--shadow-lg);
+			}
+
+			.stat-icon svg {
+				width: 32px;
+				height: 32px;
+			}
+
+			.stat-content {
+				flex: 1;
+			}
+
+			.stat-value {
+				font-size: var(--font-size-4xl);
+				font-weight: var(--font-weight-extrabold);
+				color: var(--text-primary);
+				margin-bottom: var(--spacing-2);
+				display: block;
+			}
+
+			.stat-label {
+				font-size: var(--font-size-lg);
+				color: var(--text-secondary);
+				font-weight: var(--font-weight-medium);
+			}
+
+			/* Content Sections */
+			.content-section {
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-2xl);
+				padding: var(--spacing-8);
+				box-shadow: var(--shadow-md);
+				transition: all var(--transition-normal);
+				margin-bottom: var(--spacing-8);
+			}
+
+			.section-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: var(--spacing-6);
+				flex-wrap: wrap;
+				gap: var(--spacing-4);
+			}
+
+			.section-title {
+				margin: 0;
+				font-size: var(--font-size-2xl);
+				font-weight: var(--font-weight-bold);
+				color: var(--text-primary);
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-3);
+			}
+
+			/* Upload Form */
+			.upload-form {
+				display: flex;
+				gap: var(--spacing-4);
+				align-items: center;
+				flex-wrap: wrap;
+			}
+
+			.upload-form select,
+			.upload-form input[type="file"] {
+				padding: var(--spacing-3) var(--spacing-4);
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-md);
+				color: var(--text-primary);
+				font-size: var(--font-size-sm);
+				transition: all var(--transition-normal);
+			}
+
+			.upload-form select:focus,
+			.upload-form input[type="file"]:focus {
+				outline: none;
+				border-color: var(--primary-color);
+				box-shadow: 0 0 0 3px rgba(11, 121, 255, 0.1);
+			}
+
+			.upload-btn {
+				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+				color: white;
+				border: none;
+				padding: var(--spacing-3) var(--spacing-6);
+				border-radius: var(--radius-md);
+				font-weight: var(--font-weight-semibold);
+				cursor: pointer;
+				transition: all var(--transition-normal);
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-2);
+			}
+
+			.upload-btn:hover:not(:disabled) {
+				transform: translateY(-2px) scale(1.02);
+				box-shadow: var(--shadow-lg);
+			}
+
+			.upload-btn:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+				transform: none;
+			}
+
+			/* Files Grid */
+			.files-grid {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-4);
+			}
+
+			/* List view for media files */
+			.files-grid.list-view {
+				gap: var(--spacing-2);
+			}
+
+			.files-grid.list-view .file-card {
+				display: flex;
+				align-items: center;
+				padding: var(--spacing-4);
+				border-radius: var(--radius-lg);
+				transition: all var(--transition-normal);
+			}
+
+			.files-grid.list-view .file-card:hover {
+				transform: translateY(-2px);
+				box-shadow: var(--shadow-lg);
+			}
+
+			.files-grid.list-view .file-preview-container {
+				width: 80px;
+				height: 60px;
+				flex-shrink: 0;
+				margin-right: var(--spacing-4);
+				border-radius: var(--radius-md);
+				overflow: hidden;
+			}
+
+			.files-grid.list-view .file-preview {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+
+			.files-grid.list-view .file-info {
+				flex: 1;
+				padding: 0;
+			}
+
+			.files-grid.list-view .file-name {
+				font-size: var(--font-size-base);
+				margin-bottom: var(--spacing-1);
+			}
+
+			.files-grid.list-view .file-meta {
+				display: flex;
+				gap: var(--spacing-4);
+				font-size: var(--font-size-sm);
+			}
+
+			.files-grid.list-view .file-actions {
+				position: static;
+				opacity: 1;
+				margin-left: var(--spacing-4);
+				flex-shrink: 0;
+			}
+
+			.files-grid.list-view .file-actions .action-btn {
+				width: 32px;
+				height: 32px;
+				padding: 0;
+			}
+
+			.file-card {
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-lg);
+				overflow: hidden;
+				transition: all var(--transition-normal);
+				cursor: pointer;
+				position: relative;
+				box-shadow: var(--shadow-md);
+			}
+
+			.file-card:hover {
+				transform: translateY(-8px) scale(1.02);
+				box-shadow: var(--shadow-xl);
+				border-color: var(--primary-color);
+			}
+
+			.file-preview-container {
+				position: relative;
+				height: 180px;
+				background: var(--bg-secondary);
+				overflow: hidden;
+				border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+			}
+
+			.file-preview {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				transition: transform var(--transition-slow);
+			}
+
+			.file-card:hover .file-preview {
+				transform: scale(1.05);
+			}
+
+			.file-info {
+				padding: var(--spacing-4);
+			}
+
+			.file-name {
+				font-size: var(--font-size-base);
+				font-weight: var(--font-weight-semibold);
+				color: var(--text-primary);
+				margin-bottom: var(--spacing-2);
+				line-height: 1.4;
+			}
+
+			.file-meta {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-1);
+				font-size: var(--font-size-xs);
+				color: var(--text-tertiary);
+			}
+
+			.file-bucket {
+				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+				color: white;
+				padding: var(--spacing-1) var(--spacing-2);
+				border-radius: 12px;
+				font-size: 10px;
+				font-weight: var(--font-weight-semibold);
+				text-transform: uppercase;
+				display: inline-block;
+				margin-bottom: var(--spacing-1);
+			}
+
+			/* Orders Management */
+			.orders-list {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-6);
+			}
+
+			.order-card {
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-xl);
+				padding: var(--spacing-6);
+				transition: all var(--transition-normal);
+				box-shadow: var(--shadow-md);
+				position: relative;
+				overflow: hidden;
+			}
+
+			.order-card:hover {
+				transform: translateY(-4px);
+				box-shadow: var(--shadow-lg);
+				border-color: var(--primary-color);
+			}
+
+			.order-header {
+				display: flex;
+				align-items: flex-start;
+				justify-content: space-between;
+				margin-bottom: var(--spacing-4);
+			}
+
+			.order-info h4 {
+				margin: 0 0 var(--spacing-1) 0;
+				font-size: var(--font-size-lg);
+				font-weight: var(--font-weight-semibold);
+				color: var(--text-primary);
+			}
+
+			.order-meta {
+				font-size: var(--font-size-xs);
+				color: var(--text-secondary);
+				margin-bottom: var(--spacing-2);
+			}
+
+			.order-status {
+				padding: var(--spacing-1) var(--spacing-3);
+				border-radius: 20px;
+				font-size: var(--font-size-xs);
+				font-weight: var(--font-weight-semibold);
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.status-pending {
+				background: linear-gradient(135deg, #f59e0b, #d97706);
+				color: white;
+			}
+
+			.status-approved {
+				background: linear-gradient(135deg, #10b981, #059669);
+				color: white;
+			}
+
+			.status-rejected {
+				background: linear-gradient(135deg, #ef4444, #dc2626);
+				color: white;
+			}
+
+			.order-description {
+				color: var(--text-secondary);
+				margin-bottom: var(--spacing-4);
+				line-height: 1.6;
+			}
+
+			.order-actions {
+				display: flex;
+				gap: var(--spacing-3);
+				flex-wrap: wrap;
+			}
+
+			.action-btn {
+				padding: var(--spacing-2) var(--spacing-4);
+				border: none;
+				border-radius: var(--radius-md);
+				font-size: var(--font-size-sm);
+				font-weight: var(--font-weight-semibold);
+				cursor: pointer;
+				transition: all var(--transition-normal);
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-2);
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.approve-btn {
+				background: linear-gradient(135deg, #10b981, #059669);
+				color: white;
+			}
+
+			.approve-btn:hover {
+				transform: translateY(-2px) scale(1.02);
+				box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+			}
+
+			.reject-btn {
+				background: linear-gradient(135deg, #ef4444, #dc2626);
+				color: white;
+			}
+
+			.reject-btn:hover {
+				transform: translateY(-2px) scale(1.02);
+				box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+			}
+
+			.preview-btn {
+				background: var(--bg-secondary);
+				color: var(--text-primary);
+				border: 1px solid var(--border-color);
+			}
+
+			.preview-btn:hover {
+				background: var(--bg-tertiary);
+				transform: translateY(-1px);
+			}
+
+			/* Order Preview Modal */
+			.order-preview-modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: 2000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 0;
+				visibility: hidden;
+				transition: all var(--transition-normal);
+			}
+
+			.order-preview-modal.show {
+				opacity: 1;
+				visibility: visible;
+			}
+
+			.order-preview-overlay {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: var(--bg-overlay);
+				backdrop-filter: blur(8px);
+			}
+
+			.order-preview-container {
+				position: relative;
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-2xl);
+				max-width: 800px;
+				max-height: 90vh;
+				width: 90%;
+				overflow: hidden;
+				box-shadow: var(--shadow-2xl);
+				z-index: 2001;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.order-preview-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: var(--spacing-6);
+				border-bottom: 1px solid var(--border-color);
+				background: var(--bg-secondary);
+			}
+
+			.order-preview-header h3 {
+				margin: 0;
+				font-size: var(--font-size-xl);
+				font-weight: var(--font-weight-bold);
+				color: var(--text-primary);
+			}
+
+			.order-preview-close {
+				background: none;
+				border: none;
+				font-size: 2rem;
+				color: var(--text-secondary);
+				cursor: pointer;
+				padding: 0;
+				width: 40px;
+				height: 40px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: var(--radius-md);
+				transition: all var(--transition-normal);
+			}
+
+			.order-preview-close:hover {
+				background: var(--bg-tertiary);
+				color: var(--text-primary);
+			}
+
+			.order-preview-content {
+				flex: 1;
+				overflow-y: auto;
+				padding: var(--spacing-6);
+			}
+
+			.order-preview-details {
+				display: grid;
+				gap: var(--spacing-6);
+			}
+
+			.order-detail-section {
+				background: var(--bg-secondary);
+				padding: var(--spacing-4);
+				border-radius: var(--radius-lg);
+			}
+
+			.order-detail-section h4 {
+				margin: 0 0 var(--spacing-3) 0;
+				font-size: var(--font-size-lg);
+				font-weight: var(--font-weight-semibold);
+				color: var(--text-primary);
+			}
+
+			.order-media-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+				gap: var(--spacing-4);
+			}
+
+			.order-media-item {
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				border-radius: var(--radius-md);
+				overflow: hidden;
+				position: relative;
+			}
+
+			.order-media-item img,
+			.order-media-item video {
+				width: 100%;
+				height: 150px;
+				object-fit: cover;
+			}
+
+			/* File Actions */
+			.file-actions {
+				position: absolute;
+				bottom: var(--spacing-3);
+				right: var(--spacing-3);
+				display: flex;
+				gap: var(--spacing-2);
+				opacity: 0;
+				transition: opacity var(--transition-normal);
+				z-index: 3;
+			}
+
+			.file-card:hover .file-actions {
+				opacity: 1;
+			}
+
+			.file-actions .action-btn {
+				width: 36px;
+				height: 36px;
+				padding: 0;
+				border-radius: 50%;
+				background: rgba(0, 0, 0, 0.8);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				backdrop-filter: blur(10px);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.file-actions .action-btn:hover {
+				transform: scale(1.1);
+				background: rgba(0, 0, 0, 0.9);
+			}
+
+			.file-actions .action-btn svg {
+				width: 16px;
+				height: 16px;
+				color: white;
+			}
+
+			/* Empty State */
+			.empty-state {
+				text-align: center;
+				padding: 4rem var(--spacing-6);
+				color: var(--text-secondary);
+			}
+
+			.empty-state svg {
+				width: 64px;
+				height: 64px;
+				margin: 0 auto var(--spacing-4);
+				opacity: 0.5;
+			}
+
+			.empty-state h3 {
+				margin: 0 0 var(--spacing-2) 0;
+				font-size: var(--font-size-lg);
+				font-weight: var(--font-weight-semibold);
+				color: var(--text-primary);
+			}
+
+			.empty-state p {
+				margin: 0;
+				font-size: var(--font-size-sm);
+			}
+
+			/* Mobile Responsive */
+			@media (max-width: 768px) {
+				.admin-container {
+					padding: var(--spacing-4);
+				}
+
+				.stats-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.files-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.upload-form {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				.section-header {
+					flex-direction: column;
+					align-items: flex-start;
+				}
+
+				.admin-title {
+					font-size: var(--font-size-3xl);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Theme Toggle -->
+		<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+			<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<circle cx="12" cy="12" r="5"/>
+				<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+			</svg>
+			<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+			</svg>
+		</button>
+
+		<div class="admin-container">
+			<!-- Navigation Header -->
+			<header class="admin-header">
+				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+					<div>
+						<h1 class="admin-title">Admin Dashboard</h1>
+						<p class="admin-subtitle">Manage your portfolio and orders</p>
+					</div>
+					<div>
+						<a href="/" class="btn btn-primary">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
+								<path d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Home Page
+						</a>
+					</div>
+				</div>
+			</header>
+
+			<!-- Stats -->
+			<div class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+						</svg>
+					</div>
+					<div class="stat-content">
+						<div class="stat-value" id="pendingCount">0</div>
+						<div class="stat-label">Pending Approvals</div>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
+						</svg>
+					</div>
+					<div class="stat-content">
+						<div class="stat-value" id="totalOrders">0</div>
+						<div class="stat-label">Total Orders</div>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+						</svg>
+					</div>
+					<div class="stat-content">
+						<div class="stat-value" id="portfolioItems">0</div>
+						<div class="stat-label">Portfolio Items</div>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" stroke="currentColor" stroke-width="2"/>
+						</svg>
+					</div>
+					<div class="stat-content">
+						<div class="stat-value" id="revenue">$0</div>
+						<div class="stat-label">Revenue</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Orders Management -->
+			<div class="content-section">
+				<div class="section-header">
+					<h2 class="section-title">Order Management</h2>
+				</div>
+				<div class="orders-list" id="ordersList">
+					<!-- Orders will be populated by JavaScript -->
+				</div>
+			</div>
+
+			<!-- Portfolio Management -->
+			<div class="content-section">
+				<div class="section-header">
+					<h2 class="section-title">Portfolio Management</h2>
+					<div class="upload-form">
+						<select id="bucketSelect">
+							<option value="animation">Animation</option>
+							<option value="artwork">Artwork</option>
+							<option value="video_editing">Video Editing</option>
+						</select>
+						<input type="file" id="fileInput" multiple accept="image/*,video/*">
+						<button class="upload-btn" id="uploadBtn">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Upload Files
+						</button>
+					</div>
+				</div>
+				<div class="files-grid" id="filesGrid">
+					<!-- Portfolio files will be populated by JavaScript -->
+				</div>
+			</div>
+
+			<!-- Media Management -->
+			<div class="content-section">
+				<div class="section-header">
+					<h2 class="section-title">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;">
+							<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+						</svg>
+						Uploaded Media Management
+					</h2>
+				</div>
+				<div class="media-list-container" id="mediaGrid">
+					<!-- Media files will be populated by JavaScript -->
+				</div>
+			</div>
+
+			<!-- Order Preview Modal -->
+			<div class="order-preview-modal" id="orderPreviewModal">
+				<div class="order-preview-overlay"></div>
+				<div class="order-preview-container">
+					<div class="order-preview-header">
+						<h3 id="orderPreviewTitle">Order Details</h3>
+						<button class="order-preview-close" id="orderPreviewClose">×</button>
+					</div>
+					<div class="order-preview-content">
+						<div class="order-preview-details" id="orderPreviewDetails">
+							<!-- Order details will be populated by JavaScript -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Make Supabase URL available to JavaScript
+			window.SUPABASE_URL = 'https://avmiweumvpveykxtamfm.supabase.co';
+
+			// Type declaration for window
+			declare global {
+				interface Window {
+					SUPABASE_URL: string;
+				}
+			}
+			
+			// Simple Admin Dashboard JavaScript
+			document.addEventListener('DOMContentLoaded', function() {
+				// Theme Toggle Functionality
+				const themeToggle = document.getElementById('themeToggle');
+				const html = document.documentElement;
+
+				// Load saved theme
+				const savedTheme = localStorage.getItem('theme') || 'light';
+				if (savedTheme === 'dark') {
+					html.setAttribute('data-theme', 'dark');
+				}
+
+				// Theme toggle event
+				themeToggle.addEventListener('click', function() {
+					const currentTheme = html.getAttribute('data-theme');
+					const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+					html.setAttribute('data-theme', newTheme);
+					localStorage.setItem('theme', newTheme);
+				});
+
+				// File Upload Functionality
+				const uploadBtn = document.getElementById('uploadBtn');
+				const fileInput = document.getElementById('fileInput');
+				const bucketSelect = document.getElementById('bucketSelect');
+
+				uploadBtn.addEventListener('click', async function() {
+					const files = fileInput.files;
+					const bucket = bucketSelect.value;
+
+					if (files.length === 0) {
+						alert('Please select files to upload');
+						return;
+					}
+
+					this.disabled = true;
+					this.innerHTML = 'Uploading...';
+
+					try {
+						for (let file of files) {
+							const formData = new FormData();
+							formData.append('files', file);
+							formData.append('bucket', bucket);
+
+							const response = await fetch('/api/uploads', {
+								method: 'POST',
+								body: formData
+							});
+
+							if (!response.ok) {
+								throw new Error(`Upload failed: ${response.statusText}`);
+							}
+						}
+
+						alert('Files uploaded successfully!');
+						fileInput.value = '';
+						loadPortfolioFiles();
+
+					} catch (error) {
+						console.error('Upload error:', error);
+						alert('Upload failed. Please try again.');
+					} finally {
+						this.disabled = false;
+						this.innerHTML = `
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+							Upload Files
+						`;
+					}
+				});
+
+				// Load portfolio files
+				async function loadPortfolioFiles() {
+					try {
+						const response = await fetch('/api/uploads');
+						const files = await response.json();
+
+						const filesGrid = document.getElementById('filesGrid');
+						filesGrid.innerHTML = '';
+
+						if (files.length === 0) {
+							filesGrid.innerHTML = `
+								<div class="empty-state">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									<h3>No portfolio files yet</h3>
+									<p>Upload some files to get started</p>
+								</div>
+							`;
+							return;
+						}
+
+						files.forEach(file => {
+							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/${file.bucket}/${encodeURIComponent(file.path)}`;
+							const fileCard = document.createElement('div');
+							fileCard.className = 'file-card';
+							fileCard.innerHTML = `
+								<div class="file-preview-container">
+									${file.mime.startsWith('video/') ?
+										`<video src="${fileUrl}" class="file-preview" muted></video>` :
+										`<img src="${fileUrl}" alt="${file.filename}" class="file-preview" loading="lazy">`
+									}
+									<div class="file-actions">
+										<button class="action-btn delete-btn" data-file-id="${file.id}" title="Delete file">
+											<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="file-info">
+									<div class="file-bucket">${file.bucket.replace('_', ' ').toUpperCase()}</div>
+									<h4 class="file-name">${file.filename}</h4>
+									<div class="file-meta">
+										<span>${new Date(file.created_at).toLocaleDateString()}</span>
+										<span>${file.mime}</span>
+									</div>
+								</div>
+							`;
+
+							// Add delete event listener
+							const deleteBtn = fileCard.querySelector('.delete-btn');
+							deleteBtn.addEventListener('click', (e) => {
+								e.stopPropagation();
+								deleteFile(file.id);
+							});
+
+							filesGrid.appendChild(fileCard);
+						});
+
+					} catch (error) {
+						console.error('Error loading portfolio files:', error);
+					}
+				}
+
+				// Delete file
+				async function deleteFile(fileId) {
+					if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) return;
+
+					try {
+						const response = await fetch(`/api/uploads/${fileId}`, {
+							method: 'DELETE'
+						});
+
+						if (response.ok) {
+							alert('File deleted successfully!');
+							loadPortfolioFiles();
+							updateStats();
+						} else {
+							alert('Failed to delete file');
+						}
+					} catch (error) {
+						console.error('Delete error:', error);
+						alert('Failed to delete file');
+					}
+				}
+
+				// Update stats
+				async function updateStats() {
+					try {
+						const ordersResponse = await fetch('/api/admin/orders');
+						const orders = await ordersResponse.json();
+
+						document.getElementById('totalOrders').textContent = orders.length;
+						document.getElementById('pendingCount').textContent = orders.filter(o => o.status === 'pending').length;
+
+						const revenue = orders.reduce((sum, order) => sum + (parseFloat(order.price) || 0), 0);
+						document.getElementById('revenue').textContent = `$${revenue.toFixed(2)}`;
+
+					} catch (error) {
+						console.error('Error updating stats:', error);
+					}
+				}
+
+				// Load orders for management
+				async function loadOrders() {
+					try {
+						const response = await fetch('/api/admin/orders');
+						const orders = await response.json();
+
+						const ordersList = document.getElementById('ordersList');
+						ordersList.innerHTML = '';
+
+						if (orders.length === 0) {
+							ordersList.innerHTML = `
+								<div class="empty-state">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									<h3>No pending orders</h3>
+									<p>All orders have been processed</p>
+								</div>
+							`;
+							return;
+						}
+
+						orders.forEach(order => {
+							const orderCard = document.createElement('div');
+							orderCard.className = 'order-card';
+							orderCard.innerHTML = `
+								<div class="order-header">
+									<div class="order-info">
+										<h4>Order #${order.id}</h4>
+										<div class="order-meta">${new Date(order.created_at).toLocaleDateString()}</div>
+									</div>
+									<div class="order-status status-${order.status || 'pending'}">${order.status || 'Pending'}</div>
+								</div>
+								<div class="order-description">
+									<strong>Service:</strong> ${order.service_title || 'N/A'}<br>
+									<strong>Customer:</strong> ${order.customer_email || 'N/A'}<br>
+									<strong>Description:</strong> ${order.description || 'No description'}
+								</div>
+								<div class="order-actions">
+									<button class="action-btn preview-btn" data-order-id="${order.id}">
+										<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"/>
+											<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Preview
+									</button>
+									<button class="action-btn approve-btn" data-order-id="${order.id}">
+										<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Accept
+									</button>
+									<button class="action-btn reject-btn" data-order-id="${order.id}">
+										<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Reject
+									</button>
+								</div>
+							`;
+
+							// Add event listeners
+							const previewBtn = orderCard.querySelector('.preview-btn');
+							const approveBtn = orderCard.querySelector('.approve-btn');
+							const rejectBtn = orderCard.querySelector('.reject-btn');
+
+							previewBtn.addEventListener('click', () => showOrderPreview(order));
+							approveBtn.addEventListener('click', () => approveOrder(order.id));
+							rejectBtn.addEventListener('click', () => rejectOrder(order.id));
+
+							ordersList.appendChild(orderCard);
+						});
+
+					} catch (error) {
+						console.error('Error loading orders:', error);
+					}
+				}
+
+				// Show order preview modal
+				function showOrderPreview(order) {
+					const modal = document.getElementById('orderPreviewModal');
+					const title = document.getElementById('orderPreviewTitle');
+					const details = document.getElementById('orderPreviewDetails');
+
+					title.textContent = `Order #${order.id} - ${order.service_title || 'Service Request'}`;
+
+					details.innerHTML = `
+						<div class="order-detail-section">
+							<h4>Order Information</h4>
+							<p><strong>Service:</strong> ${order.service_title || 'N/A'}</p>
+							<p><strong>Customer Email:</strong> ${order.customer_email || 'N/A'}</p>
+							<p><strong>Status:</strong> ${order.status || 'Pending'}</p>
+							<p><strong>Created:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+							<p><strong>Description:</strong> ${order.description || 'No description provided'}</p>
+						</div>
+						<div class="order-detail-section">
+							<h4>Media Files</h4>
+							<div class="order-media-grid" id="orderMediaGrid">
+								<!-- Media will be loaded here -->
+							</div>
+						</div>
+					`;
+
+					// Load media files if any
+					loadOrderMedia(order.id);
+
+					modal.classList.add('show');
+				}
+
+				// Load order media
+				async function loadOrderMedia(orderId) {
+					try {
+						const response = await fetch(`/api/orders/${orderId}/files`);
+						const files = await response.json();
+
+						const mediaGrid = document.getElementById('orderMediaGrid');
+						mediaGrid.innerHTML = '';
+
+						if (files.length === 0) {
+							mediaGrid.innerHTML = `
+								<div class="empty-state" style="padding: 2rem;">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									<h3>No media attached</h3>
+									<p>Customer hasn't uploaded any reference files yet</p>
+								</div>
+							`;
+							return;
+						}
+
+						files.forEach(file => {
+							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/order-files/${orderId}/${encodeURIComponent(file.filename)}`;
+							const mediaItem = document.createElement('div');
+							mediaItem.className = 'order-media-item';
+							mediaItem.innerHTML = `
+								${file.mime_type.startsWith('video/') ?
+									`<video src="${fileUrl}" controls style="width: 100%; height: 150px; object-fit: cover;"></video>` :
+									`<img src="${fileUrl}" alt="${file.original_name}" style="width: 100%; height: 150px; object-fit: cover;">`
+								}
+								<div style="padding: var(--spacing-2); background: var(--bg-secondary); border-top: 1px solid var(--border-color);">
+									<div style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--text-primary); margin-bottom: var(--spacing-1);">${file.original_name}</div>
+									<div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: var(--spacing-2);">
+										${new Date(file.uploaded_at).toLocaleDateString()} • ${formatFileSizeOrder(file.size)}
+									</div>
+									<button class="action-btn delete-order-file-btn" data-file-id="${file.id}" data-file-name="${file.original_name}" style="width: 100%; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--radius-sm); font-size: 10px; cursor: pointer;">
+										<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 12px; display: inline; margin-right: var(--spacing-1);">
+											<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+										</svg>
+										Delete File
+									</button>
+								</div>
+							`;
+
+							// Add delete event listener
+							const deleteBtn = mediaItem.querySelector('.delete-order-file-btn');
+							deleteBtn.addEventListener('click', (e) => {
+								e.stopPropagation();
+								deleteOrderFile(orderId, file.id, file.original_name);
+							});
+
+							mediaGrid.appendChild(mediaItem);
+						});
+
+					} catch (error) {
+						console.error('Error loading order media:', error);
+						const mediaGrid = document.getElementById('orderMediaGrid');
+						mediaGrid.innerHTML = `
+							<div class="empty-state" style="padding: 2rem;">
+								<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2"/>
+								</svg>
+								<h3>Error loading media</h3>
+								<p>Please try refreshing the page</p>
+							</div>
+						`;
+					}
+				}
+
+				// Approve order
+				async function approveOrder(orderId) {
+					if (!confirm('Are you sure you want to approve this order? This will send an approval email to the customer.')) return;
+
+					try {
+						const response = await fetch('/api/admin/orders/approve', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ orderId })
+						});
+
+						if (response.ok) {
+							alert('Order approved successfully!');
+							loadOrders();
+							updateStats();
+						} else {
+							alert('Failed to approve order');
+						}
+					} catch (error) {
+						console.error('Approve error:', error);
+						alert('Failed to approve order');
+					}
+				}
+
+				// Reject order
+				async function rejectOrder(orderId) {
+					const reason = prompt('Please provide a reason for rejection (optional):');
+
+					try {
+						const response = await fetch('/api/admin/orders/reject', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ orderId, reason })
+						});
+
+						if (response.ok) {
+							alert('Order rejected successfully!');
+							loadOrders();
+							updateStats();
+						} else {
+							alert('Failed to reject order');
+						}
+					} catch (error) {
+						console.error('Reject error:', error);
+						alert('Failed to reject order');
+					}
+				}
+
+				// Close order preview modal
+				document.getElementById('orderPreviewClose').addEventListener('click', () => {
+					document.getElementById('orderPreviewModal').classList.remove('show');
+				});
+
+				document.getElementById('orderPreviewModal').addEventListener('click', (e) => {
+					if (e.target.classList.contains('order-preview-overlay')) {
+						document.getElementById('orderPreviewModal').classList.remove('show');
+					}
+				});
+
+				// Load media files for management
+				async function loadMediaFiles() {
+					try {
+						const response = await fetch('/api/uploads');
+						const files = await response.json();
+
+						const mediaGrid = document.getElementById('mediaGrid');
+						mediaGrid.innerHTML = '';
+
+						if (files.length === 0) {
+							mediaGrid.innerHTML = `
+								<div class="empty-state">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									<h3>No media files uploaded</h3>
+									<p>All uploaded media files will appear here</p>
+								</div>
+							`;
+							return;
+						}
+
+						files.forEach(file => {
+							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/${file.bucket}/${encodeURIComponent(file.path)}`;
+							const fileCard = document.createElement('div');
+							fileCard.className = 'file-card';
+							fileCard.innerHTML = `
+								<div class="file-preview-container">
+									${file.mime.startsWith('video/') ?
+										`<video src="${fileUrl}" class="file-preview" muted></video>` :
+										`<img src="${fileUrl}" alt="${file.filename}" class="file-preview" loading="lazy">`
+									}
+									<div class="file-actions">
+										<button class="action-btn delete-btn" data-file-id="${file.id}" title="Delete file">
+											<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="file-info">
+									<div class="file-bucket">${file.bucket.replace('_', ' ').toUpperCase()}</div>
+									<h4 class="file-name">${file.filename}</h4>
+									<div class="file-meta">
+										<span>Uploaded: ${new Date(file.created_at).toLocaleDateString()}</span>
+										<span>Type: ${file.mime}</span>
+										<span>Size: ${formatFileSize(file.size || 0)}</span>
+									</div>
+								</div>
+							`;
+
+							// Add delete event listener
+							const deleteBtn = fileCard.querySelector('.delete-btn');
+							deleteBtn.addEventListener('click', (e) => {
+								e.stopPropagation();
+								deleteMediaFile(file.id, file.filename);
+							});
+
+							mediaGrid.appendChild(fileCard);
+						});
+
+					} catch (error) {
+						console.error('Error loading media files:', error);
+						const mediaGrid = document.getElementById('mediaGrid');
+						mediaGrid.innerHTML = `
+							<div class="empty-state">
+								<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2"/>
+								</svg>
+								<h3>Error loading media files</h3>
+								<p>Please try refreshing the page</p>
+							</div>
+						`;
+					}
+				}
+
+				// Delete media file with confirmation
+				async function deleteMediaFile(fileId, filename) {
+					const confirmed = confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone and will permanently remove the file from storage.`);
+					if (!confirmed) return;
+
+					try {
+						const deleteBtn = document.querySelector(`[data-file-id="${fileId}"]`);
+						const originalText = deleteBtn.innerHTML;
+						deleteBtn.disabled = true;
+						deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4l16 16M4 20l16-16" stroke="currentColor" stroke-width="2"/></svg>';
+
+						const response = await fetch(`/api/uploads/${fileId}`, {
+							method: 'DELETE'
+						});
+
+						if (response.ok) {
+							// Show success message
+							showNotification('File deleted successfully!', 'success');
+							loadMediaFiles();
+							loadPortfolioFiles(); // Refresh portfolio section too
+							updateStats();
+						} else {
+							const errorData = await response.json().catch(() => ({}));
+							throw new Error(errorData.error || `Failed to delete file (${response.status})`);
+						}
+					} catch (error) {
+						console.error('Delete error:', error);
+						showNotification(`Failed to delete file: ${error.message}`, 'error');
+					} finally {
+						const deleteBtn = document.querySelector(`[data-file-id="${fileId}"]`);
+						if (deleteBtn) {
+							deleteBtn.disabled = false;
+							deleteBtn.innerHTML = originalText;
+						}
+					}
+				}
+
+				// Delete order file
+				async function deleteOrderFile(orderId, fileId, filename) {
+					const confirmed = confirm(`Are you sure you want to delete "${filename}" from this order? This action cannot be undone.`);
+					if (!confirmed) return;
+
+					try {
+						const deleteBtn = document.querySelector(`[data-file-id="${fileId}"]`);
+						const originalText = deleteBtn.innerHTML;
+						deleteBtn.disabled = true;
+						deleteBtn.innerHTML = 'Deleting...';
+
+						const response = await fetch(`/api/orders/${orderId}/files`, {
+							method: 'DELETE',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ fileId })
+						});
+
+						if (response.ok) {
+							showNotification('File deleted successfully!', 'success');
+							loadOrderMedia(orderId); // Refresh the media grid
+						} else {
+							const errorData = await response.json().catch(() => ({}));
+							throw new Error(errorData.error || `Failed to delete file (${response.status})`);
+						}
+					} catch (error) {
+						console.error('Delete order file error:', error);
+						showNotification(`Failed to delete file: ${error.message}`, 'error');
+					} finally {
+						const deleteBtn = document.querySelector(`[data-file-id="${fileId}"]`);
+						if (deleteBtn) {
+							deleteBtn.disabled = false;
+							deleteBtn.innerHTML = originalText;
+						}
+					}
+				}
+
+				// Format file size
+				function formatFileSize(bytes) {
+					if (bytes === 0) return '0 Bytes';
+					const k = 1024;
+					const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+					const i = Math.floor(Math.log(bytes) / Math.log(k));
+					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+				}
+
+				// Format file size for order files
+				function formatFileSizeOrder(bytes) {
+					if (!bytes) return 'Unknown';
+					if (bytes === 0) return '0 Bytes';
+					const k = 1024;
+					const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+					const i = Math.floor(Math.log(bytes) / Math.log(k));
+					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+				}
+
+				// Show notification
+				function showNotification(message, type = 'info') {
+					// Create notification element
+					const notification = document.createElement('div');
+					notification.className = `notification notification-${type}`;
+					notification.style.cssText = `
+						position: fixed;
+						top: 20px;
+						right: 20px;
+						padding: 12px 16px;
+						border-radius: 8px;
+						color: white;
+						font-weight: 500;
+						z-index: 10000;
+						max-width: 400px;
+						box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+						transform: translateX(100%);
+						transition: transform 0.3s ease;
+					`;
+
+					// Set background color based on type
+					if (type === 'success') {
+						notification.style.backgroundColor = '#10b981';
+					} else if (type === 'error') {
+						notification.style.backgroundColor = '#ef4444';
+					} else {
+						notification.style.backgroundColor = '#3b82f6';
+					}
+
+					notification.textContent = message;
+					document.body.appendChild(notification);
+
+					// Animate in
+					setTimeout(() => {
+						notification.style.transform = 'translateX(0)';
+					}, 100);
+
+					// Remove after 5 seconds
+					setTimeout(() => {
+						notification.style.transform = 'translateX(100%)';
+						setTimeout(() => {
+							document.body.removeChild(notification);
+						}, 300);
+					}, 5000);
+				}
+
+				// Initialize
+				loadPortfolioFiles();
+				loadMediaFiles();
+				loadOrders();
+				updateStats();
+
+				// Refresh data every 30 seconds
+				setInterval(() => {
+					updateStats();
+					loadOrders();
+					loadMediaFiles();
+				}, 30000);
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,89 @@
+---
+import { supabase } from '../lib/supabase';
+import Header from '../components/Header.tsx';
+import '../styles/global.css';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+
+const { data: uploads } = await supabase
+  .from('uploads')
+  .select('*')
+  .eq('public', true);
+
+const animation = uploads?.filter(u => u.bucket === 'animation') || [];
+const artwork = uploads?.filter(u => u.bucket === 'artwork') || [];
+const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Portfolio - NKScreates</title>
+	</head>
+	<body>
+		<Header client:load />
+		<main>
+			<h2>Portfolio</h2>
+			<div class="tabs">
+				<button onclick="showTab('animation')">Animation</button>
+				<button onclick="showTab('artwork')">Artwork</button>
+				<button onclick="showTab('video_editing')">Video Editing</button>
+			</div>
+			<div id="animation" class="tab-content">
+				<div class="gallery">
+					{animation.map(item => (
+						<div class="item">
+							{item.mime?.startsWith('video/') ? (
+								<video controls>
+									<source src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} type={item.mime} />
+								</video>
+							) : (
+								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
+							)}
+							<p>{item.filename}</p>
+						</div>
+					))}
+				</div>
+			</div>
+			<div id="artwork" class="tab-content" style="display: none;">
+				<div class="gallery">
+					{artwork.map(item => (
+						<div class="item">
+							{item.mime?.startsWith('video/') ? (
+								<video controls>
+									<source src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} type={item.mime} />
+								</video>
+							) : (
+								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
+							)}
+							<p>{item.filename}</p>
+						</div>
+					))}
+				</div>
+			</div>
+			<div id="video_editing" class="tab-content" style="display: none;">
+				<div class="gallery">
+					{videoEditing.map(item => (
+						<div class="item">
+							{item.mime?.startsWith('video/') ? (
+								<video controls>
+									<source src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} type={item.mime} />
+								</video>
+							) : (
+								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
+							)}
+							<p>{item.filename}</p>
+						</div>
+					))}
+				</div>
+			</div>
+		</main>
+		<script>
+			function showTab(tabName) {
+				document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+				document.getElementById(tabName).style.display = 'block';
+			}
+		</script>
+	</body>
+</html>

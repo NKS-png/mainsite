@@ -1,0 +1,956 @@
+---
+import { supabase } from '../lib/supabase';
+import '../styles/global.css';
+import Header from '../components/Header.tsx';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+
+const { data: uploads } = await supabase
+	.from('uploads')
+	.select('*')
+	.eq('bucket', 'animation')
+	.eq('public', true)
+	.order('created_at', { ascending: false });
+
+const rawAnimationItems = uploads || [];
+const animationItems = Array.from(
+	new Map(
+		rawAnimationItems.map((item) => [item.id ?? `${item.bucket}/${item.path}`, item])
+	).values()
+);
+
+const totalAnimations = animationItems.length;
+const totalVideos = animationItems.filter((item) => item.mime?.startsWith('video/')).length;
+const totalFrames = totalAnimations - totalVideos;
+const lastUpdated = animationItems[0]?.created_at
+	? new Date(animationItems[0].created_at).toLocaleDateString()
+	: 'Today';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Animation Portfolio - NKScreates</title>
+		<style>
+			/* Modern Animation Page - Glassmorphism Design */
+			.animation-page {
+				min-height: 100vh;
+				background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+				position: relative;
+				overflow: hidden;
+			}
+
+			/* Animated background */
+			.animation-page::before {
+				content: '';
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: 
+					radial-gradient(circle at 20% 50%, rgba(11, 121, 255, 0.08) 0%, transparent 50%),
+					radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.08) 0%, transparent 50%);
+				pointer-events: none;
+				z-index: -1;
+				animation: gradientShift 15s ease infinite;
+			}
+
+			@keyframes gradientShift {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0.8; }
+			}
+
+			.section-container {
+				max-width: 1400px;
+				margin: 0 auto;
+				padding: 0 var(--spacing-6);
+			}
+
+			/* Hero Section */
+			.animation-hero {
+				padding: var(--spacing-20) 0 var(--spacing-16);
+				position: relative;
+				z-index: 1;
+			}
+
+			.hero-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: var(--spacing-12);
+				align-items: center;
+			}
+
+			.hero-text h1 {
+				font-size: clamp(3rem, 8vw, 4.5rem);
+				background: linear-gradient(135deg, #0B79FF, #7c3aed, #ec4899);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+				font-weight: 800;
+				margin-bottom: var(--spacing-6);
+				line-height: 1.1;
+				animation: slideDown 0.8s ease-out;
+			}
+
+			@keyframes slideDown {
+				from {
+					opacity: 0;
+					transform: translateY(-30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.hero-text p {
+				font-size: var(--font-size-lg);
+				color: var(--text-secondary);
+				margin-bottom: var(--spacing-8);
+				line-height: 1.7;
+			}
+
+			.hero-buttons {
+				display: flex;
+				gap: var(--spacing-4);
+				flex-wrap: wrap;
+				margin-bottom: var(--spacing-12);
+			}
+
+			.btn-hero {
+				padding: var(--spacing-4) var(--spacing-8);
+				border-radius: var(--radius-full);
+				font-weight: 600;
+				border: none;
+				cursor: pointer;
+				transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+				display: inline-flex;
+				align-items: center;
+				gap: var(--spacing-2);
+				font-size: var(--font-size-base);
+			}
+
+			.btn-primary-hero {
+				background: linear-gradient(135deg, #0B79FF, #7c3aed);
+				color: white;
+				box-shadow: 0 10px 30px rgba(11, 121, 255, 0.3);
+			}
+
+			.btn-primary-hero:hover {
+				transform: translateY(-4px);
+				box-shadow: 0 20px 45px rgba(11, 121, 255, 0.4);
+			}
+
+			.btn-secondary-hero {
+				background: rgba(255, 255, 255, 0.7);
+				backdrop-filter: blur(10px);
+				border: 2px solid rgba(11, 121, 255, 0.3);
+				color: var(--text-primary);
+			}
+
+			.btn-secondary-hero:hover {
+				background: rgba(255, 255, 255, 0.95);
+				border-color: rgba(11, 121, 255, 0.6);
+				transform: translateY(-2px);
+			}
+
+			/* Stats Cards */
+			.hero-stats {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				gap: var(--spacing-6);
+			}
+
+			.stat-card {
+				background: rgba(255, 255, 255, 0.6);
+				backdrop-filter: blur(20px);
+				border: 1px solid rgba(255, 255, 255, 0.4);
+				padding: var(--spacing-8);
+				border-radius: var(--radius-2xl);
+				transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+				position: relative;
+				overflow: hidden;
+				animation: fadeInUp 0.8s ease-out backwards;
+			}
+
+			.stat-card:nth-child(1) { animation-delay: 0.2s; }
+			.stat-card:nth-child(2) { animation-delay: 0.3s; }
+			.stat-card:nth-child(3) { animation-delay: 0.4s; }
+			.stat-card:nth-child(4) { animation-delay: 0.5s; }
+
+			@keyframes fadeInUp {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.stat-card::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: -100%;
+				width: 100%;
+				height: 100%;
+				background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+				animation: shimmer 3s infinite;
+			}
+
+			@keyframes shimmer {
+				0% { left: -100%; }
+				100% { left: 100%; }
+			}
+
+			.stat-card:hover {
+				transform: translateY(-8px);
+				background: rgba(255, 255, 255, 0.9);
+				box-shadow: 0 20px 40px rgba(11, 121, 255, 0.15);
+				border-color: rgba(11, 121, 255, 0.4);
+			}
+
+			.stat-number {
+				font-size: clamp(2.5rem, 5vw, 3.5rem);
+				font-weight: 800;
+				background: linear-gradient(135deg, #0B79FF, #7c3aed);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.stat-label {
+				font-size: var(--font-size-sm);
+				color: var(--text-secondary);
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				margin-top: var(--spacing-2);
+				font-weight: 600;
+			}
+
+			/* Gallery Section */
+			.animation-showcase {
+				padding: var(--spacing-20) 0 var(--spacing-24);
+				position: relative;
+				z-index: 1;
+			}
+
+			.showcase-header {
+				text-align: center;
+				margin-bottom: var(--spacing-16);
+			}
+
+			.showcase-header h2 {
+				font-size: clamp(2.5rem, 6vw, 4rem);
+				margin-bottom: var(--spacing-4);
+				color: var(--text-primary);
+			}
+
+			.showcase-description {
+				max-width: 700px;
+				margin: 0 auto var(--spacing-12);
+				color: var(--text-secondary);
+				font-size: var(--font-size-lg);
+				line-height: 1.7;
+			}
+
+			/* Filter Pills */
+			.filter-container {
+				display: flex;
+				justify-content: center;
+				gap: var(--spacing-3);
+				flex-wrap: wrap;
+				margin-bottom: var(--spacing-16);
+			}
+
+			.filter-pill {
+				padding: var(--spacing-3) var(--spacing-6);
+				border: 2px solid rgba(11, 121, 255, 0.2);
+				background: rgba(255, 255, 255, 0.5);
+				backdrop-filter: blur(10px);
+				border-radius: var(--radius-full);
+				cursor: pointer;
+				font-weight: 600;
+				color: var(--text-primary);
+				transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+				font-size: var(--font-size-sm);
+			}
+
+			.filter-pill:hover {
+				background: rgba(11, 121, 255, 0.1);
+				border-color: rgba(11, 121, 255, 0.5);
+				transform: translateY(-2px);
+			}
+
+			.filter-pill.active {
+				background: linear-gradient(135deg, #0B79FF, #7c3aed);
+				color: white;
+				border-color: rgba(11, 121, 255, 0.8);
+				box-shadow: 0 8px 25px rgba(11, 121, 255, 0.3);
+			}
+
+			/* Portfolio Grid */
+			.portfolio-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+				gap: var(--spacing-8);
+				animation: fadeInGrid 0.8s ease-out;
+			}
+
+			@keyframes fadeInGrid {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.portfolio-item {
+				background: rgba(255, 255, 255, 0.6);
+				backdrop-filter: blur(20px);
+				border: 1px solid rgba(255, 255, 255, 0.4);
+				border-radius: var(--radius-3xl);
+				overflow: hidden;
+				transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				animation: slideUp 0.6s ease-out backwards;
+			}
+
+			.portfolio-item:nth-child(1) { animation-delay: 0.1s; }
+			.portfolio-item:nth-child(2) { animation-delay: 0.2s; }
+			.portfolio-item:nth-child(3) { animation-delay: 0.3s; }
+			.portfolio-item:nth-child(n+4) { animation-delay: calc(0.3s + (var(--index, 0) - 3) * 0.1s); }
+
+			@keyframes slideUp {
+				from {
+					opacity: 0;
+					transform: translateY(30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.portfolio-item:hover {
+				background: rgba(255, 255, 255, 0.85);
+				border-color: rgba(11, 121, 255, 0.5);
+				transform: translateY(-12px);
+				box-shadow: 0 30px 60px rgba(11, 121, 255, 0.2);
+			}
+
+			/* Media Container */
+			.media-container {
+				position: relative;
+				width: 100%;
+				padding-top: 66.67%;
+				overflow: hidden;
+				background: linear-gradient(135deg, rgba(11, 121, 255, 0.1), rgba(124, 58, 237, 0.1));
+			}
+
+			.media-container video,
+			.media-container img {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+			}
+
+			.portfolio-item:hover .media-container video,
+			.portfolio-item:hover .media-container img {
+				transform: scale(1.08);
+			}
+
+			.media-badge {
+				position: absolute;
+				top: var(--spacing-4);
+				right: var(--spacing-4);
+				background: rgba(11, 121, 255, 0.95);
+				color: white;
+				padding: var(--spacing-2) var(--spacing-4);
+				border-radius: var(--radius-full);
+				font-size: var(--font-size-xs);
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				backdrop-filter: blur(10px);
+				z-index: 10;
+				box-shadow: 0 4px 15px rgba(11, 121, 255, 0.3);
+			}
+
+			/* Content */
+			.portfolio-content {
+				padding: var(--spacing-6);
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.portfolio-title {
+				font-size: var(--font-size-xl);
+				font-weight: 700;
+				margin-bottom: var(--spacing-2);
+				color: var(--text-primary);
+			}
+
+			.portfolio-meta {
+				display: flex;
+				gap: var(--spacing-4);
+				margin-bottom: var(--spacing-3);
+				font-size: var(--font-size-sm);
+				color: var(--text-secondary);
+				flex-wrap: wrap;
+			}
+
+			.portfolio-description {
+				color: var(--text-secondary);
+				font-size: var(--font-size-sm);
+				margin-bottom: var(--spacing-4);
+				flex: 1;
+				line-height: 1.6;
+			}
+
+			.portfolio-action {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--spacing-2);
+				padding: var(--spacing-3) var(--spacing-6);
+				background: linear-gradient(135deg, #0B79FF, #7c3aed);
+				color: white;
+				border: none;
+				border-radius: var(--radius-full);
+				cursor: pointer;
+				font-weight: 600;
+				font-size: var(--font-size-sm);
+				transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+				width: fit-content;
+				text-decoration: none;
+			}
+
+			.portfolio-action:hover {
+				transform: translateY(-3px);
+				box-shadow: 0 10px 25px rgba(11, 121, 255, 0.3);
+			}
+
+			/* Empty State */
+			.empty-state {
+				text-align: center;
+				padding: var(--spacing-24) var(--spacing-8);
+				background: rgba(255, 255, 255, 0.6);
+				backdrop-filter: blur(20px);
+				border: 2px dashed rgba(11, 121, 255, 0.2);
+				border-radius: var(--radius-3xl);
+				margin-top: var(--spacing-12);
+			}
+
+			.empty-state svg {
+				width: 80px;
+				height: 80px;
+				margin-bottom: var(--spacing-4);
+				color: var(--text-tertiary);
+				opacity: 0.5;
+			}
+
+			.empty-state h3 {
+				font-size: var(--font-size-2xl);
+				margin-bottom: var(--spacing-2);
+				color: var(--text-primary);
+			}
+
+			.empty-state p {
+				color: var(--text-secondary);
+				font-size: var(--font-size-base);
+			}
+
+			/* Responsive */
+			@media (max-width: 1024px) {
+				.hero-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.hero-text h1 {
+					font-size: clamp(2.5rem, 6vw, 3.5rem);
+				}
+
+				.hero-stats {
+					grid-template-columns: 1fr;
+				}
+			}
+
+			@media (max-width: 768px) {
+				.animation-page {
+					padding-top: var(--spacing-12);
+				}
+
+				.animation-hero {
+					padding: var(--spacing-12) 0 var(--spacing-8);
+				}
+
+				.portfolio-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.filter-container {
+					overflow-x: auto;
+					justify-content: flex-start;
+					padding-bottom: var(--spacing-2);
+					-webkit-overflow-scrolling: touch;
+				}
+
+				.showcase-header h2 {
+					font-size: clamp(2rem, 5vw, 3rem);
+				}
+			}
+
+			/* Fullscreen Modal Styles */
+			.fullscreen-modal {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100vw;
+				height: 100vh;
+				z-index: 10000;
+				display: none;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.fullscreen-modal.active {
+				display: flex;
+			}
+
+			.fullscreen-overlay {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.9);
+				backdrop-filter: blur(10px);
+				cursor: pointer;
+			}
+
+			.fullscreen-content {
+				position: relative;
+				max-width: 90vw;
+				max-height: 90vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				z-index: 10001;
+			}
+
+			.fullscreen-close {
+				position: absolute;
+				top: -60px;
+				right: 0;
+				background: rgba(255, 255, 255, 0.2);
+				backdrop-filter: blur(10px);
+				border: none;
+				color: white;
+				width: 50px;
+				height: 50px;
+				border-radius: 50%;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.3s ease;
+				z-index: 10002;
+			}
+
+			.fullscreen-close:hover {
+				background: rgba(255, 255, 255, 0.3);
+				transform: scale(1.1);
+			}
+
+			.fullscreen-media-container {
+				position: relative;
+				max-width: 100%;
+				max-height: 80vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.fullscreen-media {
+				max-width: 100%;
+				max-height: 100%;
+				object-fit: contain;
+				border-radius: var(--radius-lg);
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+			}
+
+			.fullscreen-info {
+				margin-top: var(--spacing-6);
+				text-align: center;
+				color: white;
+			}
+
+			.fullscreen-info h3 {
+				font-size: var(--font-size-2xl);
+				font-weight: 600;
+				margin: 0;
+			}
+
+			@media (max-width: 768px) {
+				.fullscreen-content {
+					max-width: 95vw;
+					max-height: 95vh;
+				}
+
+				.fullscreen-close {
+					top: -50px;
+					width: 40px;
+					height: 40px;
+				}
+
+				.fullscreen-media-container {
+					max-height: 70vh;
+				}
+
+				.fullscreen-info {
+					margin-top: var(--spacing-4);
+				}
+
+				.fullscreen-info h3 {
+					font-size: var(--font-size-xl);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<Header client:load />
+		<main class="animation-page">
+			<!-- Hero Section -->
+			<section class="animation-hero section-container">
+				<div class="hero-grid">
+					<div class="hero-text">
+						<h1>Motion Graphics & Animation</h1>
+						<p>
+							Premium animation sequences, motion loops, and visual storytelling. Every frame crafted with precision 
+							and designed to integrate seamlessly with modern web experiences.
+						</p>
+						<div class="hero-buttons">
+							<a href="/services" class="btn-hero btn-primary-hero">
+								Start a Project
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M5 12h14M12 5l7 7-7 7"/>
+								</svg>
+							</a>
+							<button id="scrollToGallery" class="btn-hero btn-secondary-hero">
+								Explore Work
+							</button>
+						</div>
+					</div>
+					<div class="hero-stats">
+						<div class="stat-card">
+							<div class="stat-number">{totalAnimations}</div>
+							<div class="stat-label">Total Projects</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-number">{totalVideos}</div>
+							<div class="stat-label">Motion Loops</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-number">{Math.max(totalFrames, 0)}</div>
+							<div class="stat-label">Key Frames</div>
+						</div>
+						<div class="stat-card">
+							<div class="stat-number">{lastUpdated}</div>
+							<div class="stat-label">Last Updated</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Gallery Section -->
+			<section class="animation-showcase section-container" id="gallery">
+				<div class="showcase-header">
+					<h2>Latest Animations</h2>
+					<p class="showcase-description">
+						Explore our portfolio of motion graphics, animated sequences, and visual effects.
+						Each piece demonstrates our commitment to quality and creative excellence.
+					</p>
+				</div>
+
+				<div class="filter-container">
+					<button class="filter-pill active" data-filter="all">All Works</button>
+					<button class="filter-pill" data-filter="video">Motion Loops</button>
+					<button class="filter-pill" data-filter="image">Storyboards</button>
+				</div>
+
+				{animationItems.length > 0 ? (
+					<div class="portfolio-grid">
+						{animationItems.map((item, index) => {
+							const isVideo = item.mime?.startsWith('video/');
+							const publicSrc = `${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`;
+							return (
+								<div
+									class="portfolio-item"
+									data-type={isVideo ? 'video' : 'image'}
+									data-src={publicSrc}
+									data-filename={item.filename}
+									style={{ '--index': index }}
+								>
+									<div class="media-container">
+										<span class="media-badge">{isVideo ? 'VIDEO' : 'IMAGE'}</span>
+										{isVideo ? (
+											<video
+												src={publicSrc}
+												autoplay
+												loop
+												muted
+												playsinline
+												preload="metadata"
+											/>
+										) : (
+											<img src={publicSrc} alt={item.filename} loading="lazy" decoding="async" />
+										)}
+									</div>
+									<div class="portfolio-content">
+										<h3 class="portfolio-title">{item.filename}</h3>
+										<div class="portfolio-meta">
+											<span>📅 {new Date(item.created_at).toLocaleDateString()}</span>
+											<span>{isVideo ? '🎬 Video' : '🖼️ Image'}</span>
+										</div>
+										<p class="portfolio-description">
+											{isVideo ? 'Seamless motion loop ready for integration' : 'High-resolution storyboard frame'}
+										</p>
+										<a href={publicSrc} target="_blank" rel="noopener noreferrer" class="portfolio-action">
+											View Full Size
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+											</svg>
+										</a>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				) : (
+					<div class="empty-state">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+						</svg>
+						<h3>No Animations Yet</h3>
+						<p>Check back soon for our latest animation portfolio pieces!</p>
+					</div>
+				)}
+			</section>
+		</main>
+
+		<!-- Fullscreen Modal -->
+		<div id="fullscreen-modal" class="fullscreen-modal">
+			<div class="fullscreen-overlay" id="fullscreen-overlay"></div>
+			<div class="fullscreen-content">
+				<button class="fullscreen-close" id="fullscreen-close">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M18 6L6 18M6 6l12 12"/>
+					</svg>
+				</button>
+				<div class="fullscreen-media-container">
+					<img id="fullscreen-image" class="fullscreen-media" style="display: none;" />
+					<video id="fullscreen-video" class="fullscreen-media" controls style="display: none;">
+						Your browser does not support the video tag.
+					</video>
+				</div>
+				<div class="fullscreen-info">
+					<h3 id="fullscreen-title"></h3>
+				</div>
+			</div>
+		</div>
+
+		<script src="/enhanced-animations.js" defer></script>
+		<script src="/lottie-portfolio.js" defer></script>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const filterButtons = document.querySelectorAll('.filter-pill');
+				const portfolioItems = document.querySelectorAll('.portfolio-item');
+				const scrollButton = document.getElementById('scrollToGallery');
+
+				// Filter functionality with smooth transitions
+				filterButtons.forEach(button => {
+					button.addEventListener('click', () => {
+						filterButtons.forEach(btn => btn.classList.remove('active'));
+						button.classList.add('active');
+
+						const filterValue = button.dataset.filter;
+						portfolioItems.forEach(item => {
+							const isMatch = filterValue === 'all' || item.dataset.type === filterValue;
+							if (isMatch) {
+								item.style.display = '';
+								setTimeout(() => item.style.opacity = '1', 10);
+							} else {
+								item.style.opacity = '0';
+								setTimeout(() => item.style.display = 'none', 300);
+							}
+						});
+					});
+				});
+
+				// Scroll to gallery
+				if (scrollButton) {
+					scrollButton.addEventListener('click', () => {
+						document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+					});
+				}
+
+				// Add staggered animation to items on load
+				portfolioItems.forEach((item, index) => {
+					item.style.setProperty('--index', index);
+				});
+
+				// Smooth parallax effect on scroll
+				let ticking = false;
+				window.addEventListener('scroll', () => {
+					if (!ticking) {
+						window.requestAnimationFrame(() => {
+							const scrolled = window.scrollY;
+							portfolioItems.forEach((item, index) => {
+								const offset = (scrolled * (0.02 + index * 0.01)) % 20;
+								if (isInViewport(item)) {
+									item.style.transform = `translateY(${offset}px)`;
+								}
+							});
+							ticking = false;
+						});
+						ticking = true;
+					}
+				});
+
+				// Check if element is in viewport
+				function isInViewport(el) {
+					const rect = el.getBoundingClientRect();
+					return (
+						rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+						rect.bottom >= 0
+					);
+				}
+
+				// Add hover animation listeners
+				portfolioItems.forEach(item => {
+					item.addEventListener('mouseenter', function() {
+						const video = this.querySelector('video');
+						if (video && video.paused) {
+							video.play().catch(e => console.log('Autoplay prevented:', e));
+						}
+					});
+				});
+
+				// Fullscreen functionality
+				const modal = document.getElementById('fullscreen-modal');
+				const overlay = document.getElementById('fullscreen-overlay');
+				const closeBtn = document.getElementById('fullscreen-close');
+				const fullscreenImage = document.getElementById('fullscreen-image');
+				const fullscreenVideo = document.getElementById('fullscreen-video');
+				const fullscreenTitle = document.getElementById('fullscreen-title');
+
+				// Add click listeners to portfolio items
+				portfolioItems.forEach(item => {
+					const mediaContainer = item.querySelector('.media-container');
+					const actionBtn = item.querySelector('.portfolio-action');
+
+					// Click on media container or action button
+					[mediaContainer, actionBtn].forEach(element => {
+						if (element) {
+							element.addEventListener('click', (e) => {
+								e.preventDefault();
+								openFullscreen(item);
+							});
+						}
+					});
+				});
+
+				// Close modal functions
+				const closeModal = () => {
+					modal.classList.remove('active');
+					// Pause video if playing
+					if (fullscreenVideo) {
+						fullscreenVideo.pause();
+						fullscreenVideo.currentTime = 0;
+					}
+					// Reset body scroll
+					document.body.style.overflow = '';
+				};
+
+				// Close on overlay click
+				overlay.addEventListener('click', closeModal);
+
+				// Close on close button click
+				closeBtn.addEventListener('click', closeModal);
+
+				// Close on Escape key
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && modal.classList.contains('active')) {
+						closeModal();
+					}
+				});
+
+				// Open fullscreen function
+				function openFullscreen(item) {
+					const src = item.dataset.src;
+					const type = item.dataset.type;
+					const filename = item.dataset.filename;
+
+					// Prevent body scroll
+					document.body.style.overflow = 'hidden';
+
+					// Set title
+					fullscreenTitle.textContent = filename;
+
+					// Show appropriate media
+					if (type === 'video') {
+						fullscreenImage.style.display = 'none';
+						fullscreenVideo.style.display = 'block';
+						fullscreenVideo.src = src;
+						fullscreenVideo.load();
+						fullscreenVideo.play().catch(e => console.log('Autoplay prevented:', e));
+					} else {
+						fullscreenVideo.style.display = 'none';
+						fullscreenImage.style.display = 'block';
+						fullscreenImage.src = src;
+						fullscreenImage.alt = filename;
+					}
+
+					// Show modal
+					modal.classList.add('active');
+				}
+			});
+
+			// Intersection Observer for lazy animations
+			const observerOptions = {
+				threshold: 0.1,
+				rootMargin: '0px 0px -50px 0px'
+			};
+
+			const observer = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					if (entry.isIntersecting) {
+						entry.target.style.opacity = '1';
+						observer.unobserve(entry.target);
+					}
+				});
+			}, observerOptions);
+
+			document.querySelectorAll('.portfolio-item').forEach(item => {
+				observer.observe(item);
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,254 @@
+---
+import { supabase } from '../lib/supabase';
+import '../styles/global.css';
+import Header from '../components/Header.tsx';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+
+// Fetch featured portfolio items for the homepage
+let uploads = [];
+let videoUploads = [];
+if (supabase) {
+  try {
+    // Get general portfolio items
+    const { data } = await supabase
+      .from('uploads')
+      .select('*')
+      .eq('public', true)
+      .limit(6);
+    uploads = data || [];
+
+    // Get video items specifically for hero rotation
+    const { data: videos } = await supabase
+      .from('uploads')
+      .select('*')
+      .eq('public', true)
+      .like('mime', 'video/%')
+      .limit(10); // Get up to 10 videos for rotation
+    videoUploads = videos || [];
+  } catch (error) {
+    console.error('Failed to fetch portfolio items:', error);
+  }
+}
+
+const portfolioItems = uploads.map((item, index) => ({
+  id: item.id,
+  title: item.filename || 'Portfolio Item',
+  category: item.bucket === 'video_editing' ? 'Video Editing' :
+            item.bucket === 'animation' ? 'Animation' : 'Digital Art',
+  bucket: item.bucket,
+  thumbnail: item.mime.startsWith('video/') ?
+    `${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}` :
+    `${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`,
+  image: item.thumbnail || item.image,
+  description: '',
+  mime: item.mime
+}));
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>NKScreates - Professional Animation & Digital Art</title>
+    <meta name="description" content="Professional animation, video editing, and digital artwork services. Transform your vision into stunning visual experiences." />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  </head>
+  <body>
+
+    <!-- Testing Banner -->
+    <div class="testing-banner">
+      <div class="testing-content">
+        <div class="testing-icon">🚧</div>
+        <div class="testing-text">
+          <strong>Website Under Testing</strong>
+          <span>Some features are under development and in testing/review phase</span>
+        </div>
+        <button class="testing-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+      </div>
+    </div>
+
+    <!-- Header (shared component) -->
+    <Header client:load />
+
+    <!-- Modern Hero Section -->
+    <section class="landing-hero">
+      <div class="hero-background">
+        <div class="hero-gradient-1"></div>
+        <div class="hero-gradient-2"></div>
+        <div class="hero-particles"></div>
+      </div>
+
+      <div class="section-container">
+        <div class="hero-content">
+          <div class="hero-text">
+            <h1 class="hero-title">
+              <span class="hero-line">Professional</span>
+              <span class="hero-line">Animation &</span>
+              <span class="hero-line">Digital Art</span>
+            </h1>
+            <p class="hero-subtitle">
+              Transform your vision into stunning visual experiences with cutting-edge animation,
+              video editing, and digital artwork services.
+            </p>
+            <div class="hero-actions">
+              <a href="/dashboard" class="cta-primary">
+                <span>Explore Portfolio</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a href="/services" class="cta-outline">
+                <span>View Services</span>
+              </a>
+              <a href="/about" class="cta-secondary">
+                <span>About Me</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="hero-showcase">
+              <div class="showcase-item featured">
+                <div class="showcase-media" id="hero-media">
+                  {videoUploads.length > 0 ? (
+                    <video id="hero-video" autoplay muted loop playsinline>
+                      <source src={`${supabaseUrl}/storage/v1/object/public/${videoUploads[0].bucket}/${encodeURIComponent(videoUploads[0].path)}`} type={videoUploads[0].mime} />
+                    </video>
+                  ) : portfolioItems[0] && (
+                    portfolioItems[0].mime.startsWith('video/') ? (
+                      <video id="hero-video" autoplay muted loop playsinline>
+                        <source src={portfolioItems[0].thumbnail} type={portfolioItems[0].mime} />
+                      </video>
+                    ) : (
+                      <img src={portfolioItems[0].thumbnail} alt={portfolioItems[0].title} loading="lazy" />
+                    )
+                  )}
+                </div>
+                <div class="showcase-overlay" id="hero-overlay">
+                  <span class="showcase-category" id="hero-category">{videoUploads.length > 0 ? (videoUploads[0].bucket === 'video_editing' ? 'Video Editing' : videoUploads[0].bucket === 'animation' ? 'Animation' : 'Digital Art') : (portfolioItems[0]?.category || 'Featured Work')}</span>
+                  <h3 class="showcase-title" id="hero-title">{videoUploads.length > 0 ? videoUploads[0].filename : (portfolioItems[0]?.title || 'Portfolio Showcase')}</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Featured Work -->
+    <section class="featured-work">
+      <div class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">Featured Work</h2>
+          <p class="section-subtitle">Recent projects that showcase our creative expertise</p>
+        </div>
+
+        <div class="work-grid">
+          {portfolioItems.slice(1, 4).map((item, index) => (
+            <div class="work-item" data-category={item.category.toLowerCase()}>
+              <div class="work-media">
+                {item.mime.startsWith('video/') ? (
+                  <video autoplay muted loop playsinline>
+                    <source src={item.thumbnail} type={item.mime} />
+                  </video>
+                ) : (
+                  <img src={item.thumbnail} alt={item.title} loading="lazy" />
+                )}
+              </div>
+              <div class="work-overlay">
+                <span class="work-category">{item.category}</span>
+                <h3 class="work-title">{item.title}</h3>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div class="work-cta">
+          <a href="/dashboard" class="cta-primary">View Full Portfolio</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="section-container">
+        <div class="cta-content">
+          <h2>Ready to Start Your Project?</h2>
+          <p>Let's collaborate to bring your creative vision to life</p>
+          <div class="cta-buttons">
+            <a href="/services" class="cta-primary">Get Started</a>
+            <a href="/about" class="cta-outline">Learn More</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <script type="module" src="/scripts/animations.js"></script>
+
+    <script define:vars={{ videoUploads, supabaseUrl }}>
+      // Video rotation functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        if (videoUploads && videoUploads.length > 1) {
+          const heroVideo = document.getElementById('hero-video');
+          const heroCategory = document.getElementById('hero-category');
+          const heroTitle = document.getElementById('hero-title');
+
+          let currentVideoIndex = 0;
+          let rotationInterval;
+
+          function getRandomInterval() {
+            // Random interval between 5-10 seconds (5000-10000ms)
+            return Math.random() * 5000 + 5000;
+          }
+
+          function changeVideo() {
+            // Get a random video that's different from current
+            let newIndex;
+            do {
+              newIndex = Math.floor(Math.random() * videoUploads.length);
+            } while (newIndex === currentVideoIndex && videoUploads.length > 1);
+
+            currentVideoIndex = newIndex;
+            const video = videoUploads[currentVideoIndex];
+
+            // Update video source
+            const videoUrl = `${supabaseUrl}/storage/v1/object/public/${video.bucket}/${encodeURIComponent(video.path)}`;
+            heroVideo.src = videoUrl;
+            heroVideo.load(); // Reload the video
+
+            // Update overlay info
+            heroCategory.textContent = video.bucket === 'video_editing' ? 'Video Editing' :
+                                     video.bucket === 'animation' ? 'Animation' : 'Digital Art';
+            heroTitle.textContent = video.filename;
+
+            // Clear existing interval and set new random one
+            clearInterval(rotationInterval);
+            rotationInterval = setInterval(changeVideo, getRandomInterval());
+          }
+
+          // Start the rotation with initial random interval
+          rotationInterval = setInterval(changeVideo, getRandomInterval());
+
+          // Optional: Pause rotation on hover
+          const heroShowcase = document.querySelector('.hero-showcase');
+          heroShowcase.addEventListener('mouseenter', () => {
+            clearInterval(rotationInterval);
+          });
+
+          heroShowcase.addEventListener('mouseleave', () => {
+            rotationInterval = setInterval(changeVideo, getRandomInterval());
+          });
+        }
+      });
+    </script>
+
+  </body>
+</html>

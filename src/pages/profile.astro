@@ -1,0 +1,399 @@
+---
+import '../styles/global.css';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Profile Settings - NKScreates</title>
+	</head>
+	<body>
+		<!-- Header -->
+		<header class="site-header">
+			<div class="header-content">
+				<div class="logo">
+					<h1 onclick="window.location.href='/'" style="cursor: pointer;">NKScreates</h1>
+				</div>
+				<nav class="main-nav">
+					<a href="/" class="nav-link">Home</a>
+					<a href="#portfolio" class="nav-link">Portfolio</a>
+					<a href="#store" class="nav-link">Store</a>
+				</nav>
+				<div class="header-actions">
+					<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+						<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="12" cy="12" r="5"/>
+							<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+						</svg>
+						<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+						</svg>
+					</button>
+
+					<!-- Auth Section -->
+					<div class="auth-section" id="authSection">
+						<!-- Not logged in -->
+						<div class="auth-buttons" id="authButtons">
+							<button onclick="window.location.href='/login'" class="btn btn-secondary">Login</button>
+							<button onclick="window.location.href='/signup'" class="btn btn-primary">Sign Up</button>
+						</div>
+
+						<!-- Logged in -->
+						<div class="user-menu" id="userMenu" style="display: none;">
+							<span class="welcome-text" id="welcomeText">Welcome!</span>
+							<div class="user-dropdown">
+								<button class="user-menu-btn" id="userMenuBtn">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2"/>
+									</svg>
+								</button>
+								<div class="dropdown-menu" id="dropdownMenu" style="display: none;">
+									<a href="/profile" class="dropdown-item active">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"/>
+											<circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Profile Settings
+									</a>
+									<a href="/orders" class="dropdown-item">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										My Orders
+									</a>
+									<a href="#" onclick="openMessages()" class="dropdown-item">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Messages
+									</a>
+									<a href="#" onclick="openHelp()" class="dropdown-item">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+											<path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 2h.01" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Help & Support
+									</a>
+									<div class="dropdown-divider"></div>
+									<a href="#" onclick="cartManager.logout()" class="dropdown-item logout-item">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2"/>
+										</svg>
+										Logout
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Admin Button (shown only for admin users) -->
+					<button class="admin-btn" id="adminBtn" style="display: none;" onclick="window.location.href='/admin'">
+						Admin
+					</button>
+
+					<!-- Cart Icon (only shown when logged in) -->
+					<div class="profile-cart-icon" id="profileCartIcon" tabindex="0" role="button" aria-label="Open cart" style="display: none;">
+						<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="22" cy="22" r="21" fill="var(--bg-primary)" stroke="var(--border-color)" stroke-width="2"/>
+							<circle cx="22" cy="17" r="7" fill="var(--text-secondary)"/>
+							<path d="M10 37c0-7.732 6.268-14 14-14s14 6.268 14 14" fill="var(--text-secondary)"/>
+							<circle cx="30" cy="14" r="9" fill="#0B79FF" opacity="0.9"/>
+							<rect x="26" y="10" width="8" height="8" rx="2" fill="var(--bg-primary)"/>
+							<circle cx="30" cy="14" r="2.5" fill="#0B79FF"/>
+							<path d="M28 12h4M30 10v4" stroke="#0B79FF" stroke-width="1.5"/>
+						</svg>
+						<!-- Notification Badge -->
+						<div class="notification-badge" id="notificationBadge" style="display: none;">
+							<span id="notificationCount">0</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Main Content -->
+		<main style="min-height: calc(100vh - 80px); padding: var(--spacing-6);">
+			<div class="section-container" style="max-width: 800px; margin: 0 auto;">
+				<div style="text-align: center; margin-bottom: var(--spacing-12);">
+					<div style="width: 120px; height: 120px; margin: 0 auto var(--spacing-6); background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: 48px; font-weight: var(--font-weight-bold);">
+						<svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+							<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+							<circle cx="12" cy="7" r="4"/>
+						</svg>
+					</div>
+					<h1 style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-2); color: var(--text-primary);">Profile Settings</h1>
+					<p style="color: var(--text-secondary); font-size: var(--font-size-lg);">Manage your account information and preferences</p>
+				</div>
+
+				<!-- Profile Form -->
+				<div class="auth-card" style="background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: var(--radius-2xl); padding: var(--spacing-8); box-shadow: var(--shadow-xl);">
+					<form id="profile-form" style="display: flex; flex-direction: column; gap: var(--spacing-6);">
+
+						<!-- Current Info Display -->
+						<div style="background: var(--bg-secondary); padding: var(--spacing-4); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+							<h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-2); color: var(--text-primary);">Current Information</h3>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
+								<div>
+									<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-1); color: var(--text-secondary); font-size: var(--font-size-sm);">Email</label>
+									<p id="current-email" style="color: var(--text-primary); font-weight: var(--font-weight-medium);">-</p>
+								</div>
+								<div>
+									<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-1); color: var(--text-secondary); font-size: var(--font-size-sm);">Name</label>
+									<p id="current-name" style="color: var(--text-primary); font-weight: var(--font-weight-medium);">-</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- Update Name -->
+						<div class="form-group">
+							<label for="update-name" style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-2); color: var(--text-primary);">Update Display Name</label>
+							<input
+								type="text"
+								id="update-name"
+								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none;"
+								placeholder="Enter your new display name"
+							/>
+							<p style="font-size: var(--font-size-sm); color: var(--text-tertiary); margin-top: var(--spacing-1);">This will update how your name appears throughout the site</p>
+						</div>
+
+						<!-- Update Password -->
+						<div class="form-group">
+							<label for="current-password" style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-2); color: var(--text-primary);">Change Password</label>
+							<input
+								type="password"
+								id="current-password"
+								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none; margin-bottom: var(--spacing-3);"
+								placeholder="Current password"
+							/>
+							<input
+								type="password"
+								id="new-password"
+								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none; margin-bottom: var(--spacing-3);"
+								placeholder="New password (min 6 characters)"
+								minlength="6"
+							/>
+							<input
+								type="password"
+								id="confirm-password"
+								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none;"
+								placeholder="Confirm new password"
+							/>
+						</div>
+
+						<!-- Preferences -->
+						<div class="form-group">
+							<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-3); color: var(--text-primary);">Preferences</label>
+							<div style="display: flex; align-items: center; gap: var(--spacing-3);">
+								<input type="checkbox" id="email-notifications" style="width: 18px; height: 18px;">
+								<label for="email-notifications" style="color: var(--text-secondary); cursor: pointer;">Receive email notifications for orders and updates</label>
+							</div>
+						</div>
+
+						<!-- Action Buttons -->
+						<div style="display: flex; gap: var(--spacing-4); flex-wrap: wrap;">
+							<button
+								type="submit"
+								id="update-profile-btn"
+								style="background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); color: var(--text-inverse); border: none; padding: var(--spacing-4) var(--spacing-8); border-radius: var(--radius-xl); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); box-shadow: var(--shadow-lg); flex: 1; min-width: 150px;"
+							>
+								Update Profile
+							</button>
+							<button
+								type="button"
+								onclick="window.location.href='/'"
+								style="background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: var(--spacing-4) var(--spacing-8); border-radius: var(--radius-xl); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); flex: 1; min-width: 150px;"
+							>
+								Back to Home
+							</button>
+						</div>
+					</form>
+
+					<!-- Success/Error Messages -->
+					<div id="message-container" style="margin-top: var(--spacing-6); display: none;">
+						<div id="success-message" style="background: #10B981; color: white; padding: var(--spacing-4); border-radius: var(--radius-lg); display: none;">
+							Profile updated successfully!
+						</div>
+						<div id="error-message" style="background: #EF4444; color: white; padding: var(--spacing-4); border-radius: var(--radius-lg); display: none;">
+							Error updating profile. Please try again.
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<script define:vars={{ supabaseUrl, supabaseKey }}>
+			import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+
+			const supabase = createClient(supabaseUrl, supabaseKey);
+
+			// Load current user data
+			document.addEventListener('DOMContentLoaded', async function() {
+				try {
+					const { data: { user } } = await supabase.auth.getUser();
+
+					if (user) {
+						document.getElementById('current-email').textContent = user.email;
+						document.getElementById('current-name').textContent = user.user_metadata?.full_name || user.email;
+						document.getElementById('update-name').value = user.user_metadata?.full_name || '';
+					} else {
+						// Not logged in, redirect to login
+						window.location.href = '/login';
+					}
+				} catch (error) {
+					console.error('Error loading user data:', error);
+					window.location.href = '/login';
+				}
+			});
+
+			// Handle profile update
+			document.getElementById('profile-form').addEventListener('submit', async (e) => {
+				e.preventDefault();
+
+				const updateBtn = document.getElementById('update-profile-btn');
+				const messageContainer = document.getElementById('message-container');
+				const successMessage = document.getElementById('success-message');
+				const errorMessage = document.getElementById('error-message');
+
+				// Reset messages
+				messageContainer.style.display = 'none';
+				successMessage.style.display = 'none';
+				errorMessage.style.display = 'none';
+
+				updateBtn.disabled = true;
+				updateBtn.textContent = 'Updating...';
+
+				try {
+					const newName = document.getElementById('update-name').value.trim();
+					const currentPassword = document.getElementById('current-password').value;
+					const newPassword = document.getElementById('new-password').value;
+					const confirmPassword = document.getElementById('confirm-password').value;
+
+					// Update name if provided
+					if (newName) {
+						const { error: updateError } = await supabase.auth.updateUser({
+							data: { full_name: newName }
+						});
+
+						if (updateError) throw updateError;
+					}
+
+					// Update password if provided
+					if (newPassword) {
+						if (newPassword !== confirmPassword) {
+							throw new Error('New passwords do not match');
+						}
+
+						if (newPassword.length < 6) {
+							throw new Error('Password must be at least 6 characters');
+						}
+
+						const { error: passwordError } = await supabase.auth.updateUser({
+							password: newPassword
+						});
+
+						if (passwordError) throw passwordError;
+					}
+
+					// Show success message
+					messageContainer.style.display = 'block';
+					successMessage.style.display = 'block';
+
+					// Update local storage
+					const user = JSON.parse(localStorage.getItem('user') || '{}');
+					if (newName) {
+						user.name = newName;
+						localStorage.setItem('user', JSON.stringify(user));
+					}
+
+					// Clear form
+					document.getElementById('update-name').value = '';
+					document.getElementById('current-password').value = '';
+					document.getElementById('new-password').value = '';
+					document.getElementById('confirm-password').value = '';
+
+				} catch (error) {
+					console.error('Profile update error:', error);
+					messageContainer.style.display = 'block';
+					errorMessage.style.display = 'block';
+					errorMessage.textContent = error.message || 'Error updating profile. Please try again.';
+				} finally {
+					updateBtn.disabled = false;
+					updateBtn.textContent = 'Update Profile';
+				}
+			});
+
+			// Theme toggle functionality
+			document.addEventListener('DOMContentLoaded', function() {
+				const themeToggle = document.getElementById('themeToggle');
+				const html = document.documentElement;
+
+				// Load saved theme
+				const savedTheme = localStorage.getItem('theme') || 'light';
+				html.setAttribute('data-theme', savedTheme);
+
+				if (themeToggle) {
+					themeToggle.addEventListener('click', function() {
+						const currentTheme = html.getAttribute('data-theme');
+						const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+						html.setAttribute('data-theme', newTheme);
+						localStorage.setItem('theme', newTheme);
+					});
+				}
+			});
+		</script>
+		<script src="/cart-manager.js" is:inline></script>
+		<script>
+			// Initialize authentication and UI on page load
+			document.addEventListener('DOMContentLoaded', function() {
+				// Ensure cart manager is initialized
+				if (typeof cartManager !== 'undefined') {
+					cartManager.initAuthUI();
+					cartManager.updateAuthUI();
+					cartManager.updateAuthBasedUI();
+				}
+
+				// Handle profile/cart icon click
+				const profileCartIcon = document.getElementById('profileCartIcon');
+				if (profileCartIcon) {
+					profileCartIcon.addEventListener('click', function(e) {
+						e.preventDefault();
+						if (typeof cartManager !== 'undefined') {
+							cartManager.handleProfileClick();
+						}
+					});
+				}
+
+				// Handle user menu dropdown
+				const userMenuBtn = document.getElementById('userMenuBtn');
+				const dropdownMenu = document.getElementById('dropdownMenu');
+
+				if (userMenuBtn && dropdownMenu) {
+					userMenuBtn.addEventListener('click', function(e) {
+						e.stopPropagation();
+						const isVisible = dropdownMenu.style.display === 'block';
+						dropdownMenu.style.display = isVisible ? 'none' : 'block';
+					});
+
+					// Close dropdown when clicking outside
+					document.addEventListener('click', function() {
+						dropdownMenu.style.display = 'none';
+					});
+				}
+			});
+
+			// Profile action functions
+			function openMessages() {
+				alert('Messages feature coming soon!');
+			}
+
+			function openHelp() {
+				alert('Help & documentation coming soon!');
+			}
+		</script>
+	</body>
+</html>

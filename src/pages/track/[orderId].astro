@@ -1,0 +1,48 @@
+---
+import { supabase } from '../../lib/supabase';
+import '../../styles/global.css';
+
+export const prerender = false;
+
+const { orderId } = Astro.params;
+if (!orderId) return Astro.redirect('/orders');
+
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return Astro.redirect('/login');
+
+const { data: order } = await supabase
+	.from('orders')
+	.select('*')
+	.eq('id', orderId)
+	.eq('user_id', user.id)
+	.single();
+
+if (!order) return Astro.redirect('/orders');
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Track Order - NKScreates</title>
+	</head>
+	<body>
+		<header>
+			<div class="left">
+				<div id="logo">Logo</div>
+				<h1>NKScreates</h1>
+			</div>
+			<div class="right">
+				<a href="/">Home</a>
+				<a href="/orders">My Orders</a>
+				<a href="/logout">Logout</a>
+			</div>
+		</header>
+		<main>
+			<h2>Order #{order.id}</h2>
+			<p>Status: {order.status}</p>
+			<p>Total: ${order.total}</p>
+			<p>Created: {new Date(order.created_at).toLocaleDateString()}</p>
+		</main>
+	</body>
+</html>

@@ -1,0 +1,176 @@
+---
+import { supabase } from '../lib/supabase';
+import Header from '../components/Header.tsx';
+import '../styles/global.css';
+
+const { data: products } = await supabase
+  .from('products')
+  .select('*')
+  .order('price', { ascending: true });
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Services - NKScreates</title>
+  </head>
+  <body>
+    <Header client:load />
+
+    <main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <div>
+          <h1 style="margin:0; font-size:2rem;">Services</h1>
+          <p style="margin:0.25rem 0 0 0; color:var(--text-secondary);">Choose a service and add it — your order will appear on the Orders page.</p>
+        </div>
+      </div>
+
+      <div class="packages-grid">
+        {products?.map(product => (
+          <div class="package-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div class="package-header">
+                <h3 style="margin:0 0 0.25rem 0">{product.name}</h3>
+              </div>
+              <div class="package-features">
+                <p style="margin:0; color:var(--text-secondary);">{product.description}</p>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
+              <div>
+                <div style="font-size:1.25rem; font-weight:600">₹{product.price}</div>
+                <div style="color:var(--text-secondary); font-size:0.875rem">one-time</div>
+              </div>
+              <div>
+                <a href={`/project-requirements?service=${product.name.replace(/'/g, "\\'")}`} class="package-cta" style="text-decoration: none; display: inline-block;">
+                  Request Service
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+
+    <!-- Floating Cart Icon -->
+    <div id="floatingCart" class="floating-cart">
+      <div class="cart-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3h18l-1 16H4L3 3z" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 3V1a1 1 0 011-1h6a1 1 0 011 1v2M9 11v6M12 11v6M15 11v6" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span id="cartBadge" class="cart-badge">0</span>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast-notification">Service added to cart!</div>
+
+    <script>
+      // Cart functionality
+      let cart = JSON.parse(localStorage.getItem('services_cart')) || [];
+
+      function updateCartBadge() {
+        const badge = document.getElementById('cartBadge');
+        const count = cart.length;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+      }
+
+      function addToCart(id, title, price) {
+        // Check if already in cart
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+          showToast('Service already in cart!');
+          return;
+        }
+
+        // Add to cart
+        cart.push({
+          id: id,
+          title: title,
+          price: price,
+          addedAt: new Date().toISOString()
+        });
+
+        // Save to localStorage
+        localStorage.setItem('services_cart', JSON.stringify(cart));
+
+        // Update badge
+        updateCartBadge();
+
+        // Animate to cart
+        animateToCart(event.target);
+
+        // Show toast
+        showToast(`${title} added to cart!`);
+      }
+
+      function animateToCart(button) {
+        const cartIcon = document.querySelector('.cart-icon');
+        const rect = button.getBoundingClientRect();
+        const cartRect = cartIcon.getBoundingClientRect();
+
+        // Create flying element
+        const flyElement = document.createElement('div');
+        flyElement.textContent = '+';
+        flyElement.style.cssText = `
+          position: fixed;
+          top: ${rect.top}px;
+          left: ${rect.left}px;
+          width: ${rect.width}px;
+          height: ${rect.height}px;
+          background: var(--primary-color);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          font-weight: bold;
+          z-index: 1000;
+          pointer-events: none;
+          transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        `;
+
+        document.body.appendChild(flyElement);
+
+        // Trigger animation
+        setTimeout(() => {
+          flyElement.style.top = `${cartRect.top}px`;
+          flyElement.style.left = `${cartRect.left}px`;
+          flyElement.style.width = '20px';
+          flyElement.style.height = '20px';
+          flyElement.style.transform = 'scale(0.5)';
+          flyElement.style.opacity = '0.7';
+        }, 10);
+
+        // Remove element after animation
+        setTimeout(() => {
+          document.body.removeChild(flyElement);
+        }, 800);
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 3000);
+      }
+
+      // Initialize cart badge on load
+      document.addEventListener('DOMContentLoaded', updateCartBadge);
+
+      // Cart icon click
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.floating-cart')) {
+          window.location.href = '/orders';
+        }
+      });
+    </script>
+  </body>
+</html>
