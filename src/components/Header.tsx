@@ -19,11 +19,29 @@ export default function Header() {
   const [cartSummary, setCartSummary] = createSignal<CartSummary>({ itemCount: 0, subtotal: 0, total: 0 });
   const [isDarkTheme, setIsDarkTheme] = createSignal(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = createSignal(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
 
   onMount(async () => {
     if (!supabase) {
       console.warn('Supabase client not available');
       return;
+    }
+
+    // Load user from localStorage immediately for instant display
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log('Loaded user from localStorage:', userData.email);
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          full_name: userData.name || userData.full_name || userData.email?.split('@')[0] || 'User',
+          is_admin: userData.isAdmin || false,
+        });
+      } catch (e) {
+        console.warn('Error parsing stored user:', e);
+      }
     }
 
     // Small delay to ensure cookies are loaded
@@ -97,7 +115,7 @@ export default function Header() {
           setUser({
             id: userData.id,
             email: userData.email,
-            full_name: userData.email.split('@')[0], // Fallback name
+            full_name: userData.name || userData.full_name || userData.email.split('@')[0],
             is_admin: userData.isAdmin || false,
           });
           return true;
@@ -113,18 +131,7 @@ export default function Header() {
     if (!supabase) return;
 
     try {
-      // Get profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('full_name, is_admin')
-        .eq('id', userId)
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.warn('Profile fetch error:', profileError);
-      }
-
-      // Get current user data
+      // Get current user data first
       const { data: { user }, error: userError } = await supabase.auth.getUser();
 
       if (userError) {
@@ -133,13 +140,41 @@ export default function Header() {
       }
 
       if (user) {
-        setUser({
+        console.log('Loading profile for user:', user.id);
+        
+        // Get profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, is_admin')
+          .eq('id', userId)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.warn('Profile fetch error:', profileError);
+        }
+
+        // Ensure full_name always has a value
+        // Priority: profile.full_name > auth metadata > email prefix
+        let fullName = profile?.full_name || user.user_metadata?.full_name;
+        if (!fullName || fullName.trim() === '') {
+          fullName = user.email?.split('@')[0] || 'User';
+        }
+        
+        console.log('Profile data:', { profileFullName: profile?.full_name, authMetadata: user.user_metadata?.full_name, email: user.email, finalName: fullName });
+        
+        const userData = {
           id: user.id,
           email: user.email || '',
-          full_name: profile?.full_name || user.user_metadata?.full_name,
+          full_name: fullName,
+          name: fullName,
           is_admin: profile?.is_admin || false,
-        });
-        console.log('User profile loaded:', user.email);
+        };
+        
+        setUser(userData);
+        
+        // Save to localStorage for instant display on page reload
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('User profile loaded:', { email: user.email, fullName });
       }
     } catch (error) {
       console.warn('Error loading user profile:', error);
@@ -170,19 +205,27 @@ export default function Header() {
       // Clear user state immediately
       setUser(null);
 
+      // Clear localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('user_session');
+      localStorage.clear(); // Clear all localStorage to ensure clean slate
+
       // Clear custom cookie
       document.cookie = 'user_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
       // Sign out from Supabase
-      await supabase!.auth.signOut();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
       console.log('User logged out successfully');
 
-      // Redirect to home page
-      window.location.href = '/';
+      // Small delay to ensure everything is cleared, then redirect
+      await new Promise(resolve => setTimeout(resolve, 300));
+      window.location.href = '/?logout=true';
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect even if logout fails
-      window.location.href = '/';
+      window.location.href = '/?logout=true';
     }
   };
 
@@ -201,12 +244,18 @@ export default function Header() {
     setIsUserMenuOpen(false);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen());
+  };
+
   return (
     <header class="site-header">
       <div class="header-content">
         {/* Left side - Logo/Brand */}
         <div class="logo-section">
-          <h1 class="brand-name">NKScreates</h1>
+          <a href="/" class="brand-link">
+            <h1 class="brand-name">NKScreates</h1>
+          </a>
         </div>
 
         {/* Right side - Actions */}
@@ -229,11 +278,15 @@ export default function Header() {
 
           {user() ? (
             /* User Menu when logged in */
-            <div class="user-menu" onClick={toggleUserMenu}>
-              <div class="welcome-text">
-                Hi {user()?.full_name?.split(' ')[0] || user()?.email?.split('@')[0] || 'User'}
-              </div>
-              <button class="user-menu-btn" aria-label="User menu">
+            <div class="user-menu-wrapper">
+              <button class="user-menu" onClick={toggleUserMenu} aria-label="User menu">
+                <div class="welcome-text">
+                  Hi {(() => {
+                    const userObj = user();
+                    const name = userObj?.full_name ? userObj?.full_name?.split(' ')[0] : userObj?.email?.split('@')[0];
+                    return name;
+                  })()}
+                </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -257,9 +310,9 @@ export default function Header() {
                 {user()?.is_admin && (
                   <a href="/admin" class="dropdown-item" onClick={closeUserMenu}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12l2 2 4-4M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 8v8m-4-4h8M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    Admin
+                    Admin Panel
                   </a>
                 )}
                 <div class="dropdown-divider"></div>
@@ -272,11 +325,32 @@ export default function Header() {
               </div>
             </div>
           ) : (
-            /* Auth buttons when not logged in */
-            <div class="auth-buttons">
-              <a href="/login" class="auth-btn login-btn">Login</a>
-              <a href="/signup" class="auth-btn signup-btn">Sign Up</a>
-            </div>
+            <>
+              {/* Auth buttons when not logged in - Desktop */}
+              <div class="auth-buttons">
+                <a href="/login" class="auth-btn login-btn">Login</a>
+                <a href="/signup" class="auth-btn signup-btn">Sign Up</a>
+              </div>
+
+              {/* Mobile Menu Toggle - only when not logged in */}
+              <button
+                class="mobile-menu-toggle"
+                onClick={toggleMobileMenu}
+                aria-label="Toggle mobile menu"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+
+              {/* Mobile Auth Menu */}
+              {isMobileMenuOpen() && (
+                <div class="mobile-auth-menu">
+                  <a href="/login" class="auth-btn login-btn">Login</a>
+                  <a href="/signup" class="auth-btn signup-btn">Sign Up</a>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

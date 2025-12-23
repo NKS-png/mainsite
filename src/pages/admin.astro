@@ -7,7 +7,6 @@ const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 // Check admin authentication
 console.log('=== ADMIN AUTH CHECK START ===');
-console.log('Available cookies:', Astro.cookies.getAll().map(c => ({ name: c.name, hasValue: !!c.value })));
 
 const serverSupabase = createSupabaseServerClient(Astro.cookies);
 if (!serverSupabase) {
@@ -1098,17 +1097,6 @@ console.log('Admin access granted for:', user.email);
 		</style>
 	</head>
 	<body>
-		<!-- Theme Toggle -->
-		<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-			<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="12" cy="12" r="5"/>
-				<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-			</svg>
-			<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-			</svg>
-		</button>
-
 		<div class="admin-container">
 			<!-- Navigation Header -->
 			<header class="admin-header">
@@ -1117,7 +1105,17 @@ console.log('Admin access granted for:', user.email);
 						<h1 class="admin-title">Admin Dashboard</h1>
 						<p class="admin-subtitle">Manage your portfolio and orders</p>
 					</div>
-					<div>
+					<div style="display: flex; align-items: center; gap: var(--spacing-4);">
+						<!-- Theme Toggle -->
+						<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+							<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="12" cy="12" r="5"/>
+								<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+							</svg>
+							<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+							</svg>
+						</button>
 						<a href="/" class="btn btn-primary">
 							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
 								<path d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1732,17 +1730,17 @@ console.log('Admin access granted for:', user.email);
 						});
 
 					} catch (error) {
-						console.error('Error loading media files:', error);
-						const mediaGrid = document.getElementById('mediaGrid');
-						mediaGrid.innerHTML = `
-							<div class="empty-state">
-								<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2"/>
-								</svg>
-								<h3>Error loading media files</h3>
-								<p>Please try refreshing the page</p>
-							</div>
-						`;
+					    console.error('Error loading media files:', error);
+					    const mediaGrid = document.getElementById('mediaGrid');
+					    mediaGrid.innerHTML = `
+					        <div class="empty-state">
+					            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2"/>
+					            </svg>
+					            <h3>Media Management Unavailable</h3>
+					            <p>Supabase service role key not configured. Please check your environment variables.</p>
+					        </div>
+					    `;
 					}
 				}
 

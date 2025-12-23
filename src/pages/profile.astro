@@ -136,249 +136,658 @@ console.log('📋 Final userData for template:', userData);
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Profile Settings - NKScreates</title>
+		<style>
+			:root {
+				--spacing-2: 0.5rem;
+				--spacing-3: 0.75rem;
+				--spacing-4: 1rem;
+				--spacing-6: 1.5rem;
+				--spacing-8: 2rem;
+				--spacing-12: 3rem;
+				--radius-lg: 0.5rem;
+				--radius-xl: 0.75rem;
+				--radius-2xl: 1rem;
+				--radius-full: 9999px;
+				--font-size-sm: 0.875rem;
+				--font-size-base: 1rem;
+				--font-size-lg: 1.125rem;
+				--font-size-2xl: 1.5rem;
+				--font-size-3xl: 1.875rem;
+				--font-weight-medium: 500;
+				--font-weight-semibold: 600;
+				--font-weight-bold: 700;
+				--transition-fast: 0.15s ease-in-out;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+				font-size: var(--font-size-base);
+				line-height: 1.6;
+				color: var(--text-primary, #1f2937);
+				background: var(--bg-primary, #ffffff);
+				transition: background-color 0.3s;
+			}
+
+			[data-theme="dark"] body {
+				background: var(--bg-primary, #111827);
+				color: var(--text-primary, #f3f4f6);
+			}
+
+			.profile-container {
+				min-height: 100vh;
+				padding-top: 80px;
+				background: var(--bg-primary, #ffffff);
+			}
+
+			.profile-header {
+				background: linear-gradient(135deg, var(--primary-color, #0B79FF), var(--accent-color, #FF6B9D));
+				color: white;
+				padding: var(--spacing-8) var(--spacing-6);
+				text-align: center;
+				margin-bottom: var(--spacing-8);
+			}
+
+			.profile-header h1 {
+				font-size: var(--font-size-3xl);
+				font-weight: var(--font-weight-bold);
+				margin-bottom: var(--spacing-2);
+			}
+
+			.profile-header p {
+				font-size: var(--font-size-lg);
+				opacity: 0.9;
+			}
+
+			.profile-content {
+				max-width: 600px;
+				margin: 0 auto;
+				padding: 0 var(--spacing-6) var(--spacing-12);
+			}
+
+			/* Form Sections */
+			.form-section {
+				background: var(--bg-secondary, #f9fafb);
+				border: 1px solid var(--border-color, #e5e7eb);
+				border-radius: var(--radius-xl);
+				padding: var(--spacing-6);
+				margin-bottom: var(--spacing-6);
+				transition: all var(--transition-fast);
+			}
+
+			[data-theme="dark"] .form-section {
+				background: var(--bg-secondary, #1f2937);
+				border-color: var(--border-color, #374151);
+			}
+
+			.form-section-title {
+				font-size: var(--font-size-lg);
+				font-weight: var(--font-weight-semibold);
+				margin-bottom: var(--spacing-4);
+				color: var(--text-primary, #1f2937);
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-2);
+			}
+
+			.form-section-title svg {
+				width: 20px;
+				height: 20px;
+				opacity: 0.7;
+			}
+
+			/* Info Display */
+			.info-display {
+				background: var(--bg-primary, #ffffff);
+				padding: var(--spacing-4);
+				border-radius: var(--radius-lg);
+				margin-bottom: var(--spacing-4);
+				border: 1px solid var(--border-color, #e5e7eb);
+			}
+
+			[data-theme="dark"] .info-display {
+				background: var(--bg-primary, #111827);
+				border-color: var(--border-color, #374151);
+			}
+
+			.info-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: var(--spacing-3) 0;
+				border-bottom: 1px solid var(--border-color, #e5e7eb);
+			}
+
+			[data-theme="dark"] .info-item {
+				border-bottom-color: var(--border-color, #374151);
+			}
+
+			.info-item:last-child {
+				border-bottom: none;
+				padding-bottom: 0;
+			}
+
+			.info-label {
+				font-size: var(--font-size-sm);
+				color: var(--text-secondary, #6b7280);
+				font-weight: var(--font-weight-medium);
+			}
+
+			.info-value {
+				color: var(--text-primary, #1f2937);
+				font-weight: var(--font-weight-semibold);
+				word-break: break-all;
+			}
+
+			[data-theme="dark"] .info-value {
+				color: var(--text-primary, #f3f4f6);
+			}
+
+			/* Form Groups */
+			.form-group {
+				margin-bottom: var(--spacing-4);
+			}
+
+			.form-group:last-child {
+				margin-bottom: 0;
+			}
+
+			label {
+				display: block;
+				font-weight: var(--font-weight-medium);
+				margin-bottom: var(--spacing-2);
+				color: var(--text-primary, #1f2937);
+				font-size: var(--font-size-sm);
+			}
+
+			input[type="text"],
+			input[type="password"],
+			input[type="email"] {
+				width: 100%;
+				padding: var(--spacing-3) var(--spacing-4);
+				border: 1px solid var(--border-color, #e5e7eb);
+				border-radius: var(--radius-lg);
+				font-size: var(--font-size-base);
+				transition: all var(--transition-fast);
+				background: var(--bg-primary, #ffffff);
+				color: var(--text-primary, #1f2937);
+			}
+
+			[data-theme="dark"] input[type="text"],
+			[data-theme="dark"] input[type="password"],
+			[data-theme="dark"] input[type="email"] {
+				background: var(--bg-primary, #111827);
+				color: var(--text-primary, #f3f4f6);
+				border-color: var(--border-color, #374151);
+			}
+
+			input[type="text"]:focus,
+			input[type="password"]:focus,
+			input[type="email"]:focus {
+				outline: none;
+				border-color: var(--primary-color, #0B79FF);
+				box-shadow: 0 0 0 3px rgba(11, 121, 255, 0.1);
+			}
+
+			.form-help {
+				font-size: var(--font-size-sm);
+				color: var(--text-secondary, #6b7280);
+				margin-top: var(--spacing-1);
+			}
+
+			/* Checkbox */
+			.checkbox-group {
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-3);
+				padding: var(--spacing-3);
+				background: var(--bg-primary, #ffffff);
+				border-radius: var(--radius-lg);
+				border: 1px solid var(--border-color, #e5e7eb);
+			}
+
+			[data-theme="dark"] .checkbox-group {
+				background: var(--bg-primary, #111827);
+				border-color: var(--border-color, #374151);
+			}
+
+			input[type="checkbox"] {
+				width: 18px;
+				height: 18px;
+				cursor: pointer;
+				accent-color: var(--primary-color, #0B79FF);
+			}
+
+			.checkbox-label {
+				margin: 0;
+				cursor: pointer;
+				user-select: none;
+			}
+
+			/* Buttons */
+			.button-group {
+				display: flex;
+				gap: var(--spacing-4);
+				flex-wrap: wrap;
+				margin-top: var(--spacing-8);
+			}
+
+			button {
+				font-family: inherit;
+				font-size: var(--font-size-base);
+				font-weight: var(--font-weight-semibold);
+				border-radius: var(--radius-lg);
+				transition: all var(--transition-fast);
+				cursor: pointer;
+				border: none;
+				padding: var(--spacing-3) var(--spacing-6);
+			}
+
+			.btn-primary {
+				background: linear-gradient(135deg, var(--primary-color, #0B79FF), var(--primary-hover, #0966d2));
+				color: white;
+				flex: 1;
+				min-width: 150px;
+				box-shadow: 0 4px 12px rgba(11, 121, 255, 0.3);
+			}
+
+			.btn-primary:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(11, 121, 255, 0.4);
+			}
+
+			.btn-primary:active {
+				transform: translateY(0);
+			}
+
+			.btn-secondary {
+				background: var(--bg-secondary, #f3f4f6);
+				color: var(--text-primary, #1f2937);
+				border: 1px solid var(--border-color, #e5e7eb);
+				flex: 1;
+				min-width: 150px;
+			}
+
+			[data-theme="dark"] .btn-secondary {
+				background: var(--bg-secondary, #1f2937);
+				color: var(--text-primary, #f3f4f6);
+				border-color: var(--border-color, #374151);
+			}
+
+			.btn-secondary:hover {
+				background: var(--border-color, #e5e7eb);
+				transform: translateY(-2px);
+			}
+
+			[data-theme="dark"] .btn-secondary:hover {
+				background: var(--border-color, #374151);
+			}
+
+			button:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+				transform: none !important;
+			}
+
+			/* Messages */
+			.message {
+				padding: var(--spacing-4);
+				border-radius: var(--radius-lg);
+				margin-top: var(--spacing-4);
+				display: none;
+				animation: slideIn 0.3s ease-out;
+			}
+
+			@keyframes slideIn {
+				from {
+					opacity: 0;
+					transform: translateY(-10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.message.show {
+				display: block;
+			}
+
+			.message-success {
+				background: #d1fae5;
+				color: #047857;
+				border: 1px solid #6ee7b7;
+			}
+
+			[data-theme="dark"] .message-success {
+				background: rgba(16, 185, 129, 0.15);
+				color: #6ee7b7;
+				border-color: #047857;
+			}
+
+			.message-error {
+				background: #fee2e2;
+				color: #b91c1c;
+				border: 1px solid #fca5a5;
+			}
+
+			[data-theme="dark"] .message-error {
+				background: rgba(239, 68, 68, 0.15);
+				color: #fca5a5;
+				border-color: #b91c1c;
+			}
+
+			/* Success Animation */
+			.success-animation {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 9999;
+				opacity: 0;
+				visibility: hidden;
+				transition: all 0.3s ease;
+			}
+
+			.success-animation.show {
+				opacity: 1;
+				visibility: visible;
+			}
+
+			.checkmark {
+				font-size: 80px;
+				color: #10b981;
+				font-weight: bold;
+				animation: checkmarkPulse 2s ease-in-out;
+			}
+
+			@keyframes checkmarkPulse {
+				0% {
+					transform: scale(0.5);
+					opacity: 0;
+				}
+				50% {
+					transform: scale(1.2);
+					opacity: 1;
+				}
+				100% {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+
+			/* Responsive */
+			@media (max-width: 640px) {
+				.profile-header {
+					padding: var(--spacing-6) var(--spacing-4);
+					margin-bottom: var(--spacing-6);
+				}
+
+				.profile-header h1 {
+					font-size: var(--font-size-2xl);
+				}
+
+				.profile-header p {
+					font-size: var(--font-size-base);
+				}
+
+				.profile-content {
+					padding: 0 var(--spacing-4) var(--spacing-8);
+				}
+
+				.form-section {
+					padding: var(--spacing-4);
+					margin-bottom: var(--spacing-4);
+				}
+
+				.button-group {
+					flex-direction: column;
+					gap: var(--spacing-3);
+					margin-top: var(--spacing-6);
+				}
+
+				button {
+					padding: var(--spacing-3) var(--spacing-4);
+					width: 100%;
+				}
+
+				.btn-primary,
+				.btn-secondary {
+					flex: none;
+					min-width: auto;
+				}
+
+				.info-item {
+					flex-direction: column;
+					align-items: flex-start;
+					gap: var(--spacing-1);
+				}
+
+				.checkmark {
+					font-size: 60px;
+				}
+			}
+
+			/* Theme support */
+			[data-theme="dark"] {
+				--primary-color: #60a5fa;
+				--bg-primary: #111827;
+				--bg-secondary: #1f2937;
+				--text-primary: #f3f4f6;
+				--text-secondary: #d1d5db;
+				--border-color: #374151;
+			}
+		</style>
 	</head>
 	<body>
-		<!-- Header -->
-		<header class="site-header">
-			<div class="header-content">
-				<div class="logo">
-					<h1 onclick="window.location.href='/'" style="cursor: pointer;">NKScreates</h1>
-				</div>
-				<nav class="main-nav">
-					<a href="/" class="nav-link">Home</a>
-					<a href="#portfolio" class="nav-link">Portfolio</a>
-					<a href="#store" class="nav-link">Store</a>
-				</nav>
-				<div class="header-actions">
-					<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-						<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<circle cx="12" cy="12" r="5"/>
-							<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-						</svg>
-						<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-						</svg>
-					</button>
-
-					<!-- Auth Section -->
-					<div class="auth-section" id="authSection">
-						<!-- Not logged in -->
-						<div class="auth-buttons" id="authButtons">
-							<button onclick="window.location.href='/login'" class="btn btn-secondary">Login</button>
-							<button onclick="window.location.href='/signup'" class="btn btn-primary">Sign Up</button>
-						</div>
-
-						<!-- Logged in -->
-						<div class="user-menu" id="userMenu" style="display: none;">
-							<span class="welcome-text" id="welcomeText">Welcome!</span>
-							<div class="user-dropdown">
-								<button class="user-menu-btn" id="userMenuBtn">
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2"/>
+		<div class="profile-container">
+			<!-- Header -->
+			<header class="site-header">
+				<div class="header-content">
+					<div class="logo-section">
+						<a href="/" class="brand-link">
+							<h1 class="brand-name">NKScreates</h1>
+						</a>
+					</div>
+					<div class="header-actions">
+						<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+							<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+								<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+							</svg>
+							<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2"/>
+							</svg>
+						</button>
+						<div class="user-menu-wrapper">
+							<button class="user-menu" id="userMenuBtn" aria-label="User menu">
+								<div class="welcome-text">
+									Hi <span id="userFirstName">User</span>
+								</div>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								</svg>
+							</button>
+							<div class="dropdown-menu" id="dropdownMenu">
+								<a href="/profile" class="dropdown-item">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+										<circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
 									</svg>
-								</button>
-								<div class="dropdown-menu" id="dropdownMenu" style="display: none;">
-									<a href="/profile" class="dropdown-item active">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"/>
-											<circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-										</svg>
-										Profile Settings
-									</a>
-									<a href="/orders" class="dropdown-item">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
-										</svg>
-										My Orders
-									</a>
-									<a href="#" onclick="openMessages()" class="dropdown-item">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
-										</svg>
-										Messages
-									</a>
-									<a href="#" onclick="openHelp()" class="dropdown-item">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-											<path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 2h.01" stroke="currentColor" stroke-width="2"/>
-										</svg>
-										Help & Support
-									</a>
-									<div class="dropdown-divider"></div>
-									<a href="#" onclick="cartManager.logout()" class="dropdown-item logout-item">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2"/>
-										</svg>
-										Logout
-									</a>
-								</div>
+									Profile
+								</a>
+								<a href="/orders" class="dropdown-item">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M9 12l2 2 4-4M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									Orders
+								</a>
+								<div class="dropdown-divider"></div>
+								<a href="#" class="dropdown-item logout-item" onclick="handleLogout(event)">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2"/>
+									</svg>
+									Logout
+								</a>
 							</div>
 						</div>
 					</div>
-
-					<!-- Admin Button (shown only for admin users) -->
-					<button class="admin-btn" id="adminBtn" style="display: none;" onclick="window.location.href='/admin'">
-						Admin
-					</button>
-
-					<!-- Cart Icon (only shown when logged in) -->
-					<div class="profile-cart-icon" id="profileCartIcon" tabindex="0" role="button" aria-label="Open cart" style="display: none;">
-						<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<circle cx="22" cy="22" r="21" fill="var(--bg-primary)" stroke="var(--border-color)" stroke-width="2"/>
-							<circle cx="22" cy="17" r="7" fill="var(--text-secondary)"/>
-							<path d="M10 37c0-7.732 6.268-14 14-14s14 6.268 14 14" fill="var(--text-secondary)"/>
-							<circle cx="30" cy="14" r="9" fill="#0B79FF" opacity="0.9"/>
-							<rect x="26" y="10" width="8" height="8" rx="2" fill="var(--bg-primary)"/>
-							<circle cx="30" cy="14" r="2.5" fill="#0B79FF"/>
-							<path d="M28 12h4M30 10v4" stroke="#0B79FF" stroke-width="1.5"/>
-						</svg>
-						<!-- Notification Badge -->
-						<div class="notification-badge" id="notificationBadge" style="display: none;">
-							<span id="notificationCount">0</span>
-						</div>
-					</div>
 				</div>
+			</header>
+
+			<!-- Profile Header Section -->
+			<div class="profile-header">
+				<h1>Profile Settings</h1>
+				<p>Manage your account and preferences</p>
 			</div>
-		</header>
 
-		<!-- Main Content -->
-		<main style="min-height: calc(100vh - 80px); padding: var(--spacing-6);">
-			<div class="section-container" style="max-width: 800px; margin: 0 auto;">
-				<div style="text-align: center; margin-bottom: var(--spacing-12);">
-					<div style="width: 120px; height: 120px; margin: 0 auto var(--spacing-6); background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: 48px; font-weight: var(--font-weight-bold);">
-						<svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-							<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-							<circle cx="12" cy="7" r="4"/>
+			<!-- Main Content -->
+			<div class="profile-content">
+				<!-- Current Information Section -->
+				<div class="form-section">
+					<div class="form-section-title">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+							<circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
 						</svg>
+						Account Information
 					</div>
-					<h1 style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-2); color: var(--text-primary);">Profile Settings</h1>
-					<p style="color: var(--text-secondary); font-size: var(--font-size-lg);">Manage your account information and preferences</p>
+					<div class="info-display">
+						<div class="info-item">
+							<span class="info-label">Email</span>
+							<span class="info-value" id="current-email">-</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">Display Name</span>
+							<span class="info-value" id="current-name">-</span>
+						</div>
+					</div>
 				</div>
 
-				<!-- Profile Form -->
-				<div class="auth-card" style="background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: var(--radius-2xl); padding: var(--spacing-8); box-shadow: var(--shadow-xl);">
-					<form id="profile-form" style="display: flex; flex-direction: column; gap: var(--spacing-6);">
-
-						<!-- Current Info Display -->
-						<div style="background: var(--bg-secondary); padding: var(--spacing-4); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-							<h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-2); color: var(--text-primary);">Current Information</h3>
-							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
-								<div>
-									<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-1); color: var(--text-secondary); font-size: var(--font-size-sm);">Email</label>
-									<p id="current-email" style="color: var(--text-primary); font-weight: var(--font-weight-medium);">-</p>
-								</div>
-								<div>
-									<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-1); color: var(--text-secondary); font-size: var(--font-size-sm);">Name</label>
-									<p id="current-name" style="color: var(--text-primary); font-weight: var(--font-weight-medium);">-</p>
-								</div>
-							</div>
+				<!-- Update Profile Form -->
+				<form id="profile-form">
+					<!-- Display Name Section -->
+					<div class="form-section">
+						<div class="form-section-title">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2"/>
+								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2"/>
+							</svg>
+							Update Display Name
 						</div>
-
-						<!-- Update Name -->
 						<div class="form-group">
-							<label for="update-name" style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-2); color: var(--text-primary);">Update Display Name</label>
+							<label for="update-name">New Display Name</label>
 							<input
 								type="text"
 								id="update-name"
-								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none;"
 								placeholder="Enter your new display name"
 							/>
-							<p style="font-size: var(--font-size-sm); color: var(--text-tertiary); margin-top: var(--spacing-1);">This will update how your name appears throughout the site</p>
+							<p class="form-help">How your name will appear on your profile and orders</p>
 						</div>
+					</div>
 
-						<!-- Update Password -->
+					<!-- Password Section -->
+					<div class="form-section">
+						<div class="form-section-title">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
+								<path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
+							</svg>
+							Security
+						</div>
 						<div class="form-group">
-							<label for="current-password" style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-2); color: var(--text-primary);">Change Password</label>
-							<input
-								type="password"
-								id="current-password"
-								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none; margin-bottom: var(--spacing-3);"
-								placeholder="Current password"
-							/>
+							<label for="new-password">New Password</label>
 							<input
 								type="password"
 								id="new-password"
-								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none; margin-bottom: var(--spacing-3);"
-								placeholder="New password (min 6 characters)"
+								placeholder="Enter new password (minimum 6 characters)"
 								minlength="6"
 							/>
+							<p class="form-help">Leave blank if you don't want to change it</p>
+						</div>
+						<div class="form-group">
+							<label for="confirm-password">Confirm Password</label>
 							<input
 								type="password"
 								id="confirm-password"
-								style="width: 100%; padding: var(--spacing-4); border: 2px solid var(--border-color); border-radius: var(--radius-lg); font-size: var(--font-size-base); transition: border-color var(--transition-fast); outline: none;"
 								placeholder="Confirm new password"
 							/>
 						</div>
+					</div>
 
-						<!-- Preferences -->
-						<div class="form-group">
-							<label style="display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--spacing-3); color: var(--text-primary);">Preferences</label>
-							<div style="display: flex; align-items: center; gap: var(--spacing-3);">
-								<input type="checkbox" id="email-notifications" style="width: 18px; height: 18px;">
-								<label for="email-notifications" style="color: var(--text-secondary); cursor: pointer;">Receive email notifications for orders and updates</label>
-							</div>
+					<!-- Preferences Section -->
+					<div class="form-section">
+						<div class="form-section-title">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="12" cy="12" r="1" stroke="currentColor" stroke-width="2"/>
+								<path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24" stroke="currentColor" stroke-width="2"/>
+							</svg>
+							Preferences
 						</div>
-
-						<!-- Action Buttons -->
-						<div style="display: flex; gap: var(--spacing-4); flex-wrap: wrap;">
-							<button
-								type="submit"
-								id="update-profile-btn"
-								style="background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); color: var(--text-inverse); border: none; padding: var(--spacing-4) var(--spacing-8); border-radius: var(--radius-xl); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); box-shadow: var(--shadow-lg); flex: 1; min-width: 150px;"
-							>
-								Update Profile
-							</button>
-							<button
-								type="button"
-								onclick="window.location.href='/'"
-								style="background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: var(--spacing-4) var(--spacing-8); border-radius: var(--radius-xl); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); cursor: pointer; transition: all var(--transition-fast); flex: 1; min-width: 150px;"
-							>
-								Back to Home
-							</button>
-						</div>
-					</form>
-
-					<!-- Success/Error Messages -->
-					<div id="message-container" style="margin-top: var(--spacing-6); display: none;">
-						<div id="success-message" style="background: #10B981; color: white; padding: var(--spacing-4); border-radius: var(--radius-lg); display: none;">
-							Profile updated successfully!
-						</div>
-						<div id="error-message" style="background: #EF4444; color: white; padding: var(--spacing-4); border-radius: var(--radius-lg); display: none;">
-							Error updating profile. Please try again.
+						<div class="checkbox-group">
+							<input type="checkbox" id="email-notifications" checked>
+							<label for="email-notifications" class="checkbox-label">
+								Receive email notifications for orders and updates
+							</label>
 						</div>
 					</div>
-				</div>
+
+					<!-- Action Buttons -->
+					<div class="button-group">
+						<button type="submit" class="btn-primary" id="update-profile-btn">
+							Save Changes
+						</button>
+						<button type="button" class="btn-secondary" onclick="window.location.href='/'">
+							Cancel
+						</button>
+					</div>
+
+					<!-- Messages -->
+					<div id="success-message" class="message message-success">
+						✓ Profile updated successfully!
+					</div>
+					<div id="error-message" class="message message-error">
+						✗ Error updating profile. Please try again.
+					</div>
+				</form>
 			</div>
-		</main>
+		</div>
+
+		<!-- Success Animation -->
+		<div id="success-animation" class="success-animation">
+			<div class="checkmark">✓</div>
+		</div>
 
 		<script define:vars={{ userData }}>
-			// Load current user data (already authenticated server-side)
+			// Make userData available globally
+			window.userData = userData;
+
+			// Load current user data
 			document.addEventListener('DOMContentLoaded', function() {
-				console.log('Loading user data from server:', userData);
+				const userData = window.userData || {};
+				console.log('Loading user data from window:', userData);
 
 				const emailElement = document.getElementById('current-email');
 				const nameElement = document.getElementById('current-name');
 				const updateNameInput = document.getElementById('update-name');
+				const userFirstName = document.getElementById('userFirstName');
 
 				if (emailElement) emailElement.textContent = userData.email || '';
 				if (nameElement) nameElement.textContent = userData.name || '';
 				if (updateNameInput) updateNameInput.value = userData.name || '';
-
-				// Update Header UI immediately based on server auth
-				const authButtons = document.getElementById('authButtons');
-				const userMenu = document.getElementById('userMenu');
-				const welcomeText = document.getElementById('welcomeText');
-				const profileCartIcon = document.getElementById('profileCartIcon');
-
-				if (authButtons) authButtons.style.display = 'none';
-				if (userMenu) userMenu.style.display = 'block';
-				if (profileCartIcon) profileCartIcon.style.display = 'flex';
-
-				if (welcomeText && userData.name) {
-					welcomeText.textContent = `Hi, ${userData.name.split(' ')[0]}`;
-				}
+				if (userFirstName) userFirstName.textContent = (userData.name || '').split(' ')[0] || 'User';
 
 				// Sync localStorage for client-side scripts
 				const storedUser = localStorage.getItem('user');
@@ -386,118 +795,103 @@ console.log('📋 Final userData for template:', userData);
 					localStorage.setItem('user', JSON.stringify({
 						id: userData.id,
 						email: userData.email,
-						name: userData.name
+						name: userData.name,
+						full_name: userData.name
 					}));
 				}
 			});
 
-			// Handle profile update
+			function showSuccessAnimation() {
+				const animation = document.getElementById('success-animation');
+				animation?.classList.add('show');
+			}
+
+			function hideMessage(elementId) {
+				const el = document.getElementById(elementId);
+				if (el) el.classList.remove('show');
+			}
+
+			function showMessage(elementId) {
+				const el = document.getElementById(elementId);
+				if (el) el.classList.add('show');
+			}
+
+			function updateUIWithName(name) {
+				const nameElement = document.getElementById('current-name');
+				const updateNameInput = document.getElementById('update-name');
+				const userFirstName = document.getElementById('userFirstName');
+
+				if (nameElement) nameElement.textContent = name;
+				if (updateNameInput) updateNameInput.value = name;
+				if (userFirstName) userFirstName.textContent = (name || '').split(' ')[0] || 'User';
+
+				// Update localStorage with the new name
+				const userData = window.userData || {};
+				userData.name = name;
+				userData.full_name = name;
+				localStorage.setItem('user', JSON.stringify(userData));
+				console.log('Updated localStorage with new name:', userData);
+			}
+
 			const profileForm = document.getElementById('profile-form');
+			
 			if (profileForm) {
 				profileForm.addEventListener('submit', async (e) => {
 					e.preventDefault();
+					console.log('Profile form submitted!');
 
-					if (!supabase) {
-						console.error('Supabase client not available');
-						return;
-					}
+					const userData = window.userData || {};
+					const updateBtn = document.getElementById('update-profile-btn');
 
-					const updateBtn = document.getElementById('update-profile-btn') as HTMLButtonElement;
-					const messageContainer = document.getElementById('message-container');
-					const successMessage = document.getElementById('success-message');
-					const errorMessage = document.getElementById('error-message');
-
-					// Reset messages
-					if (messageContainer) messageContainer.style.display = 'none';
-					if (successMessage) successMessage.style.display = 'none';
-					if (errorMessage) errorMessage.style.display = 'none';
+					// Hide previous messages
+					hideMessage('success-message');
+					hideMessage('error-message');
 
 					if (updateBtn) {
 						updateBtn.disabled = true;
-						updateBtn.textContent = 'Updating...';
+						updateBtn.textContent = 'Saving...';
 					}
 
 					try {
-						const updateNameInput = document.getElementById('update-name') as HTMLInputElement;
-						const currentPasswordInput = document.getElementById('current-password') as HTMLInputElement;
-						const newPasswordInput = document.getElementById('new-password') as HTMLInputElement;
-						const confirmPasswordInput = document.getElementById('confirm-password') as HTMLInputElement;
+						const updateNameInput = document.getElementById('update-name');
+						const newPasswordInput = document.getElementById('new-password');
+						const confirmPasswordInput = document.getElementById('confirm-password');
 
 						const newName = updateNameInput?.value?.trim() || '';
-						const currentPassword = currentPasswordInput?.value || '';
 						const newPassword = newPasswordInput?.value || '';
 						const confirmPassword = confirmPasswordInput?.value || '';
 
+						let updateOccurred = false;
+
 						// Update name if provided
-						if (newName) {
+						if (newName && newName !== userData.name) {
 							console.log('Updating user name to:', newName);
 
-							// First, try updating the profiles table (this is the proper way for user profile data)
-							const { data: { user } } = await supabase.auth.getUser();
-							if (user) {
-								const { data: profileData, error: profileError } = await supabase
-									.from('profiles')
-									.upsert({
-										id: user.id,
-										full_name: newName
-									})
-									.select();
-
-								if (profileError) {
-									console.error('Profile table update error:', profileError);
-									// Fallback to auth metadata update
-									console.log('Falling back to auth metadata update...');
-								} else {
-									console.log('Profile table updated successfully:', profileData);
-								}
-							}
-
-							// Also try updating auth user metadata (for consistency)
-							const { data: updateData, error: updateError } = await supabase.auth.updateUser({
-								data: { full_name: newName }
+							const response = await fetch('/api/profile', {
+								method: 'PUT',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									full_name: newName
+								})
 							});
 
-							if (updateError) {
-								console.error('Auth metadata update error:', updateError);
-								// Don't throw error here since profile table update might have worked
-							} else {
-								console.log('Auth metadata update response:', updateData);
+							const result = await response.json();
+
+							if (!response.ok) {
+								throw new Error(result.error || 'Failed to update profile');
 							}
 
-							// Always update UI with the new name (since we know what it should be)
-							console.log('Updating UI with name:', newName);
+							console.log('Profile updated successfully:', result);
+							updateOccurred = true;
 							updateUIWithName(newName);
-						}
-
-						// Helper function to update UI with name
-						function updateUIWithName(name) {
-							const nameElement = document.getElementById('current-name');
-							const updateNameInput = document.getElementById('update-name');
-							const welcomeText = document.getElementById('welcomeText');
-
-							if (nameElement) {
-								nameElement.textContent = name;
-							}
-							if (updateNameInput) {
-								updateNameInput.value = name;
-							}
-							if (welcomeText) {
-								welcomeText.textContent = `Hi, ${name.split(' ')[0]}`;
-							}
-
-							// Update localStorage
-							const storedUserStr = localStorage.getItem('user');
-							if (storedUserStr) {
-								const storedUser = JSON.parse(storedUserStr);
-								storedUser.name = name;
-								localStorage.setItem('user', JSON.stringify(storedUser));
-							}
 						}
 
 						// Update password if provided
 						if (newPassword) {
 							if (newPassword !== confirmPassword) {
-								throw new Error('New passwords do not match');
+								throw new Error('Passwords do not match');
 							}
 
 							if (newPassword.length < 6) {
@@ -505,47 +899,67 @@ console.log('📋 Final userData for template:', userData);
 							}
 
 							console.log('Updating password...');
-							const { error: passwordError } = await supabase.auth.updateUser({
-								password: newPassword
+							
+							const response = await fetch('/api/auth/change-password', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									newPassword
+								})
 							});
 
-							if (passwordError) {
-								console.error('Password update error:', passwordError);
-								throw passwordError;
+							const result = await response.json();
+
+							if (!response.ok) {
+								throw new Error(result.error || 'Failed to update password');
 							}
+
 							console.log('Password updated successfully');
+							updateOccurred = true;
+
+							// Clear password fields
+							if (newPasswordInput) newPasswordInput.value = '';
+							if (confirmPasswordInput) confirmPasswordInput.value = '';
 						}
 
-						// Show success message
-						if (messageContainer) messageContainer.style.display = 'block';
-						if (successMessage) successMessage.style.display = 'block';
+						if (!updateOccurred) {
+							throw new Error('No changes made to profile');
+						}
 
-						// Clear form
-						if (updateNameInput) updateNameInput.value = '';
-						if (currentPasswordInput) currentPasswordInput.value = '';
-						if (newPasswordInput) newPasswordInput.value = '';
-						if (confirmPasswordInput) confirmPasswordInput.value = '';
+						// Show success animation
+						showSuccessAnimation();
+						showMessage('success-message');
+
+						// Hide animation and reload page after 2.5 seconds
+						setTimeout(() => {
+							hideMessage('success-message');
+							const animation = document.getElementById('success-animation');
+							if (animation) animation.classList.remove('show');
+							window.location.reload();
+						}, 2500);
 
 						console.log('Profile update completed successfully');
 
 					} catch (error) {
 						console.error('Profile update error:', error);
-						if (messageContainer) messageContainer.style.display = 'block';
-						if (errorMessage) {
-							errorMessage.style.display = 'block';
-							const errorMsg = error instanceof Error ? error.message : 'Error updating profile. Please try again.';
-							errorMessage.textContent = errorMsg;
+						showMessage('error-message');
+						const errorMsg = error instanceof Error ? error.message : 'Error updating profile. Please try again.';
+						const errorEl = document.getElementById('error-message');
+						if (errorEl) {
+							errorEl.textContent = '✗ ' + errorMsg;
 						}
 					} finally {
 						if (updateBtn) {
 							updateBtn.disabled = false;
-							updateBtn.textContent = 'Update Profile';
+							updateBtn.textContent = 'Save Changes';
 						}
 					}
 				});
 			}
 
-			// Theme toggle functionality
+			// Theme toggle
 			document.addEventListener('DOMContentLoaded', function() {
 				const themeToggle = document.getElementById('themeToggle');
 				const html = document.documentElement;
@@ -563,55 +977,32 @@ console.log('📋 Final userData for template:', userData);
 						localStorage.setItem('theme', newTheme);
 					});
 				}
-			});
-		</script>
-		<script src="/cart-manager.js" is:inline></script>
-		<script>
-			// Initialize authentication and UI on page load
-			document.addEventListener('DOMContentLoaded', function() {
-				// Ensure cart manager is initialized
-				if (typeof cartManager !== 'undefined') {
-					cartManager.initAuthUI();
-					cartManager.updateAuthUI();
-					cartManager.updateAuthBasedUI();
-				}
 
-				// Handle profile/cart icon click
-				const profileCartIcon = document.getElementById('profileCartIcon');
-				if (profileCartIcon) {
-					profileCartIcon.addEventListener('click', function(e) {
-						e.preventDefault();
-						if (typeof cartManager !== 'undefined') {
-							cartManager.handleProfileClick();
-						}
-					});
-				}
-
-				// Handle user menu dropdown
+				// User menu dropdown
 				const userMenuBtn = document.getElementById('userMenuBtn');
 				const dropdownMenu = document.getElementById('dropdownMenu');
 
 				if (userMenuBtn && dropdownMenu) {
 					userMenuBtn.addEventListener('click', function(e) {
 						e.stopPropagation();
-						const isVisible = dropdownMenu.style.display === 'block';
-						dropdownMenu.style.display = isVisible ? 'none' : 'block';
+						const isVisible = dropdownMenu.classList.contains('show');
+						dropdownMenu.classList.toggle('show');
 					});
 
 					// Close dropdown when clicking outside
 					document.addEventListener('click', function() {
-						dropdownMenu.style.display = 'none';
+						dropdownMenu.classList.remove('show');
 					});
 				}
 			});
 
-			// Profile action functions
-			function openMessages() {
-				alert('Messages feature coming soon!');
-			}
-
-			function openHelp() {
-				alert('Help & documentation coming soon!');
+			function handleLogout(event) {
+				event.preventDefault();
+				// Clear localStorage and redirect
+				localStorage.removeItem('user');
+				localStorage.removeItem('user_session');
+				document.cookie = 'user_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+				window.location.href = '/';
 			}
 		</script>
 	</body>

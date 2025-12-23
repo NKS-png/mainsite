@@ -10,10 +10,12 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    // Get user from localStorage (in a real app, this would come from session/auth)
-    const user = JSON.parse(request.headers.get('user') || '{}');
 
-    if (!user?.id) {
+    // Get the authenticated user from session
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Auth error:', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -27,6 +29,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       .from('profiles')
       .upsert({
         id: user.id,
+        full_name: profileData.full_name || profileData.name,
         ...profileData
       })
       .select()
@@ -38,6 +41,16 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // Also update auth user metadata
+    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+      data: { full_name: profileData.full_name || profileData.name }
+    });
+
+    if (updateError) {
+      console.error('Auth metadata update error:', updateError);
+      // Don't fail the whole operation for this error
     }
 
     return new Response(JSON.stringify({ success: true, profile: data }), {

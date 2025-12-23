@@ -1,5 +1,5 @@
 ---
-import { supabase } from '../lib/supabase';
+import { supabase, createSupabaseServerClient } from '../lib/supabase';
 import '../styles/global.css';
 import Header from '../components/Header.tsx';
 
@@ -28,6 +28,37 @@ if (supabase) {
     videoUploads = videos || [];
   } catch (error) {
     console.error('Failed to fetch portfolio items:', error);
+  }
+}
+
+// Check for user session to display email or display name in header
+// But skip if we're coming from a logout redirect
+const isLogout = Astro.url.searchParams.has('logout');
+let userEmail = null;
+let displayName = null;
+
+if (!isLogout) {
+  const serverSupabase = createSupabaseServerClient(Astro.cookies);
+  if (serverSupabase) {
+    const { data: { session } } = await serverSupabase.auth.getSession();
+    if (session?.user) {
+      userEmail = session.user.email;
+      
+      // Fetch display name from profiles table
+      try {
+        const { data: profile } = await serverSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile?.full_name) {
+          displayName = profile.full_name;
+        }
+      } catch (error) {
+        console.log('Failed to fetch profile display name:', error);
+      }
+    }
   }
 }
 
@@ -82,71 +113,10 @@ const portfolioItems = uploads.map((item, index) => ({
         color: white;
       }
 
-      .paint-brush-container {
-        margin-bottom: 2rem;
-      }
-
-      .paint-brush {
-        width: 120px;
-        height: 120px;
-        animation: rotateBrush 2s linear infinite;
-      }
-
-      @keyframes rotateBrush {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .loading-text h2 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(135deg, #ffffff, #f0f0f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: textGlow 2s ease-in-out infinite alternate;
-      }
-
-      @keyframes textGlow {
-        from {
-          text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-        to {
-          text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6);
-        }
-      }
-
-      .loading-text p {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        font-weight: 300;
-        animation: fadeInOut 2s ease-in-out infinite;
-      }
-
-      @keyframes fadeInOut {
-        0%, 100% { opacity: 0.7; }
-        50% { opacity: 1; }
-      }
-
-      /* Responsive adjustments */
-      @media (max-width: 768px) {
-        .paint-brush {
-          width: 100px;
-          height: 100px;
-        }
-
-        .loading-text h2 {
-          font-size: 2rem;
-        }
-
-        .loading-text p {
-          font-size: 1rem;
-        }
+      .loading-gif {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
       }
     </style>
   </head>
@@ -155,34 +125,12 @@ const portfolioItems = uploads.map((item, index) => ({
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
       <div class="loading-content">
-        <div class="paint-brush-container">
-          <svg class="paint-brush" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="brushGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#ec4899;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#0B79FF;stop-opacity:1" />
-              </linearGradient>
-            </defs>
-            <!-- Paint Brush Handle -->
-            <rect x="45" y="20" width="10" height="60" rx="5" fill="url(#brushGradient)" />
-            <!-- Paint Brush Bristles -->
-            <ellipse cx="50" cy="15" rx="20" ry="8" fill="url(#brushGradient)" />
-            <!-- Paint Drips -->
-            <ellipse cx="35" cy="12" rx="3" ry="6" fill="#ec4899" opacity="0.8" />
-            <ellipse cx="50" cy="10" rx="2" ry="4" fill="#0B79FF" opacity="0.6" />
-            <ellipse cx="65" cy="13" rx="2.5" ry="5" fill="#8b5cf6" opacity="0.7" />
-          </svg>
-        </div>
-        <div class="loading-text">
-          <h2>NKScreates</h2>
-          <p>Bringing your vision to life...</p>
-        </div>
+        <img id="loading-gif" src="/start.gif" alt="Loading..." class="loading-gif">
       </div>
     </div>
 
     <!-- Testing Banner -->
-    <div class="testing-banner">
+    <div id="testing-banner" class="testing-banner" style="display: none;">
       <div class="testing-content">
         <div class="testing-icon">🚧</div>
         <div class="testing-text">
@@ -318,6 +266,17 @@ const portfolioItems = uploads.map((item, index) => ({
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const loadingScreen = document.getElementById('loading-screen');
+        const loadingGif = document.getElementById('loading-gif');
+
+        // Set appropriate gif based on screen size
+        if (loadingGif) {
+          const img = loadingGif as HTMLImageElement;
+          if (window.innerWidth <= 768) {
+            img.src = '/mobile.gif';
+          } else {
+            img.src = '/start.gif';
+          }
+        }
 
         // Hide loading screen after 2 seconds
         setTimeout(function() {
@@ -330,14 +289,69 @@ const portfolioItems = uploads.map((item, index) => ({
             }, 500);
           }
         }, 2000);
+
+        // Show testing banner after 3 seconds
+        setTimeout(function() {
+          const testingBanner = document.getElementById('testing-banner');
+          if (testingBanner) {
+            testingBanner.style.display = 'block';
+          }
+        }, 3000);
       });
     </script>
 
     <script type="module" src="/scripts/animations.js"></script>
 
-    <script define:vars={{ videoUploads, supabaseUrl }}>
+    <script define:vars={{ videoUploads, supabaseUrl, userEmail, displayName }}>
       // Video rotation functionality
       document.addEventListener('DOMContentLoaded', function() {
+        // Update welcome text and localStorage to show display name or email if logged in
+        if (userEmail) {
+          const nameToDisplay = displayName || userEmail;
+          const firstNameOnly = (nameToDisplay || '').split(' ')[0] || userEmail;
+          
+          // Update localStorage with display name if available
+          if (displayName) {
+            try {
+              const storedUser = localStorage.getItem('user');
+              if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                userData.name = displayName;
+                userData.full_name = displayName;
+                localStorage.setItem('user', JSON.stringify(userData));
+                console.log('Updated localStorage with display name:', displayName);
+              } else {
+                // Create new user object if doesn't exist
+                const newUserData = {
+                  id: userEmail,
+                  email: userEmail,
+                  name: displayName,
+                  full_name: displayName
+                };
+                localStorage.setItem('user', JSON.stringify(newUserData));
+                console.log('Created new localStorage user with display name:', displayName);
+              }
+            } catch (e) {
+              console.log('Failed to update localStorage with display name:', e);
+            }
+          }
+          
+          const updateWelcomeText = () => {
+            const welcomeText = document.getElementById('welcomeText');
+            if (welcomeText) {
+              welcomeText.textContent = `Hi, ${firstNameOnly}`;
+            }
+          };
+
+          // Try immediately and then poll briefly to catch React hydration
+          updateWelcomeText();
+          
+          const interval = setInterval(() => {
+            updateWelcomeText();
+          }, 100);
+          setTimeout(() => clearInterval(interval), 3000);
+        }
+
         if (videoUploads && videoUploads.length > 1) {
           const heroVideo = document.getElementById('hero-video');
           const heroCategory = document.getElementById('hero-category');
