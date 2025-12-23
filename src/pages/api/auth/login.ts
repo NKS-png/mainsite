@@ -43,14 +43,31 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
 
     console.log('Login successful, session created:', !!data.session);
+    console.log('Session details:', {
+      access_token: !!data.session.access_token,
+      refresh_token: !!data.session.refresh_token,
+      expires_at: data.session.expires_at
+    });
 
     // Explicitly set the session to ensure cookies are properly set
     if (data.session) {
-      await supabase.auth.setSession({
+      const setSessionResult = await supabase.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
       });
-      console.log('Session explicitly set');
+      console.log('Session explicitly set, result:', {
+        user: !!setSessionResult.data.user,
+        session: !!setSessionResult.data.session,
+        error: setSessionResult.error?.message
+      });
+
+      // Verify the session was set by trying to get it
+      const { data: verifySession, error: verifyError } = await supabase.auth.getSession();
+      console.log('Session verification:', {
+        hasSession: !!verifySession.session,
+        hasUser: !!verifySession.session?.user,
+        error: verifyError?.message
+      });
     }
 
     // Check if user is admin

@@ -21,19 +21,48 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = createSignal(false);
 
   onMount(async () => {
-    if (!supabase) return;
-    // Check current session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await loadUserProfile(session.user.id);
+    if (!supabase) {
+      console.warn('Supabase client not available');
+      return;
     }
 
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    // Small delay to ensure cookies are loaded
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check current session with better error handling
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.warn('Session retrieval error:', sessionError);
+        // Fallback: check for custom user_session cookie
+        await checkCustomUserCookie();
+      } else if (session?.user) {
+        console.log('Session found for user:', session.user.email);
+        await loadUserProfile(session.user.id);
+      } else {
+        console.log('No active session found, checking custom cookie');
+        // Fallback: check for custom user_session cookie
+        await checkCustomUserCookie();
+      }
+    } catch (error) {
+      console.warn('Error checking session:', error);
+      // Fallback: check for custom user_session cookie
+      await checkCustomUserCookie();
+    }
+
+    // Listen for auth changes with better error handling
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, !!session?.user, session?.user?.email);
       if (session?.user) {
         await loadUserProfile(session.user.id);
       } else {
-        setUser(null);
+        // Only clear user on explicit logout, not on session errors
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out explicitly');
+          setUser(null);
+        } else {
+          console.log('Session became unavailable, but not clearing user state');
+        }
       }
     });
 
@@ -46,25 +75,74 @@ export default function Header() {
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
     setIsDarkTheme(initialTheme === 'dark');
     document.documentElement.setAttribute('data-theme', initialTheme);
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   });
+
+  const checkCustomUserCookie = async () => {
+    try {
+      // Get the custom user_session cookie
+      const cookies = document.cookie.split(';');
+      const userSessionCookie = cookies.find(cookie => cookie.trim().startsWith('user_session='));
+
+      if (userSessionCookie) {
+        const cookieValue = userSessionCookie.split('=')[1];
+        const userData = JSON.parse(decodeURIComponent(cookieValue));
+
+        if (userData && userData.id && userData.email) {
+          console.log('Found user data in custom cookie:', userData.email);
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            full_name: userData.email.split('@')[0], // Fallback name
+            is_admin: userData.isAdmin || false,
+          });
+          return true;
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking custom user cookie:', error);
+    }
+    return false;
+  };
 
   const loadUserProfile = async (userId: string) => {
     if (!supabase) return;
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, is_admin')
-      .eq('id', userId)
-      .single();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      // Get profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, is_admin')
+        .eq('id', userId)
+        .single();
 
-    if (user) {
-      setUser({
-        id: user.id,
-        email: user.email || '',
-        full_name: profile?.full_name || user.user_metadata?.full_name,
-        is_admin: profile?.is_admin || false,
-      });
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.warn('Profile fetch error:', profileError);
+      }
+
+      // Get current user data
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.warn('User fetch error:', userError);
+        return;
+      }
+
+      if (user) {
+        setUser({
+          id: user.id,
+          email: user.email || '',
+          full_name: profile?.full_name || user.user_metadata?.full_name,
+          is_admin: profile?.is_admin || false,
+        });
+        console.log('User profile loaded:', user.email);
+      }
+    } catch (error) {
+      console.warn('Error loading user profile:', error);
     }
   };
 
@@ -87,8 +165,25 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-    await supabase!.auth.signOut();
-    window.location.href = '/';
+    try {
+      console.log('Logging out user...');
+      // Clear user state immediately
+      setUser(null);
+
+      // Clear custom cookie
+      document.cookie = 'user_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+      // Sign out from Supabase
+      await supabase!.auth.signOut();
+      console.log('User logged out successfully');
+
+      // Redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/';
+    }
   };
 
   const toggleTheme = () => {

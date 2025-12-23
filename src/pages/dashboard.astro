@@ -1152,6 +1152,76 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				background: var(--bg-dark);
 			}
 
+			/* Fullscreen video overlay */
+			.video-fullscreen-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100vw;
+				height: 100vh;
+				background: rgba(0, 0, 0, 0.95);
+				z-index: var(--z-modal);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				backdrop-filter: blur(10px);
+			}
+
+			.video-fullscreen-overlay.active {
+				display: flex;
+			}
+
+			.fullscreen-video-container {
+				position: relative;
+				width: 90vw;
+				height: 90vh;
+				max-width: 1200px;
+				max-height: 675px;
+			}
+
+			.fullscreen-video {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+				border-radius: var(--radius-lg);
+			}
+
+			.fullscreen-controls {
+				position: absolute;
+				bottom: var(--spacing-6);
+				left: 50%;
+				transform: translateX(-50%);
+				display: flex;
+				gap: var(--spacing-4);
+				background: rgba(0, 0, 0, 0.8);
+				padding: var(--spacing-3) var(--spacing-6);
+				border-radius: var(--radius-full);
+				backdrop-filter: blur(10px);
+			}
+
+			.fullscreen-close-btn {
+				position: absolute;
+				top: var(--spacing-6);
+				right: var(--spacing-6);
+				width: 48px;
+				height: 48px;
+				border-radius: var(--radius-full);
+				background: rgba(255, 255, 255, 0.2);
+				border: none;
+				color: white;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all var(--transition-fast);
+				backdrop-filter: blur(10px);
+			}
+
+			.fullscreen-close-btn:hover {
+				background: rgba(255, 255, 255, 0.3);
+				transform: scale(1.1);
+			}
+
 			.video-wrapper {
 				position: relative;
 				width: 100%;
@@ -1766,6 +1836,95 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 					padding: var(--spacing-2) var(--spacing-4);
 				}
 			}
+
+			/* Fullscreen Video Modal */
+			.video-fullscreen-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100vw;
+				height: 100vh;
+				background: rgba(0, 0, 0, 0.95);
+				z-index: var(--z-modal);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				backdrop-filter: blur(10px);
+			}
+
+			.video-fullscreen-overlay.active {
+				display: flex;
+			}
+
+			.fullscreen-video-container {
+				position: relative;
+				width: 90vw;
+				height: 90vh;
+				max-width: 1200px;
+				max-height: 675px;
+			}
+
+			.fullscreen-video {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+				border-radius: var(--radius-lg);
+			}
+
+			.fullscreen-controls {
+				position: absolute;
+				bottom: var(--spacing-6);
+				left: 50%;
+				transform: translateX(-50%);
+				display: flex;
+				gap: var(--spacing-4);
+				background: rgba(0, 0, 0, 0.8);
+				padding: var(--spacing-3) var(--spacing-6);
+				border-radius: var(--radius-full);
+				backdrop-filter: blur(10px);
+			}
+
+			.fullscreen-close-btn {
+				position: absolute;
+				top: var(--spacing-6);
+				right: var(--spacing-6);
+				width: 48px;
+				height: 48px;
+				border-radius: var(--radius-full);
+				background: rgba(255, 255, 255, 0.2);
+				border: none;
+				color: white;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all var(--transition-fast);
+				backdrop-filter: blur(10px);
+			}
+
+			.fullscreen-close-btn:hover {
+				background: rgba(255, 255, 255, 0.3);
+				transform: scale(1.1);
+			}
+
+			@media (max-width: 768px) {
+				.fullscreen-video-container {
+					width: 95vw;
+					height: 95vh;
+				}
+
+				.fullscreen-controls {
+					bottom: var(--spacing-4);
+					padding: var(--spacing-2) var(--spacing-4);
+				}
+
+				.fullscreen-close-btn {
+					top: var(--spacing-4);
+					right: var(--spacing-4);
+					width: 40px;
+					height: 40px;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -1924,6 +2083,11 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 											<path d="M4 18l8.5-6L4 6v12zM13 6v12l8.5-6L13 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 										</svg>
 									</button>
+									<button id="fullscreenBtn" class="video-control-btn">
+										<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+										</svg>
+									</button>
 								</div>
 								<div class="video-info">
 									<h3>Featured Work</h3>
@@ -2076,6 +2240,37 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 			</div>
 		</section>
 
+
+		<!-- Fullscreen Video Modal -->
+		<div id="video-fullscreen-overlay" class="video-fullscreen-overlay">
+			<div class="fullscreen-video-container">
+				<video id="fullscreen-video" class="fullscreen-video" controls>
+					Your browser does not support the video tag.
+				</video>
+				<div class="fullscreen-controls">
+					<button id="fullscreen-playPauseBtn" class="video-control-btn">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+					<button id="fullscreen-muteBtn" class="video-control-btn">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+					<button id="fullscreen-nextVideoBtn" class="video-control-btn">
+						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M4 18l8.5-6L4 6v12zM13 6v12l8.5-6L13 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+				</div>
+				<button id="fullscreen-close-btn" class="fullscreen-close-btn">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M18 6L6 18M6 6l12 12"/>
+					</svg>
+				</button>
+			</div>
+		</div>
 
 		<!-- Theme Toggle -->
 		<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -2245,6 +2440,7 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				const playPauseBtn = document.getElementById('playPauseBtn');
 				const muteBtn = document.getElementById('muteBtn');
 				const nextVideoBtn = document.getElementById('nextVideoBtn');
+				const fullscreenBtn = document.getElementById('fullscreenBtn');
 
 				const videoList = portfolioVideos || [];
 
@@ -2319,6 +2515,13 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 						});
 					}
 
+					if (fullscreenBtn) {
+						fullscreenBtn.addEventListener('click', (e) => {
+							e.preventDefault();
+							openFullscreenVideo(currentVideoIdx);
+						});
+					}
+
 					featuredVideo.addEventListener('play', updatePlayPauseIcon);
 					featuredVideo.addEventListener('pause', updatePlayPauseIcon);
 					featuredVideo.addEventListener('ended', () => {
@@ -2337,12 +2540,16 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				let mouseX = 0;
 				let mouseY = 0;
 				let isMouseMoving = false;
+				let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-				document.addEventListener('mousemove', (e) => {
-					mouseX = e.clientX;
-					mouseY = e.clientY;
-					isMouseMoving = true;
-				});
+				// Only enable mouse interaction on non-touch devices
+				if (!isTouchDevice) {
+					document.addEventListener('mousemove', (e) => {
+						mouseX = e.clientX;
+						mouseY = e.clientY;
+						isMouseMoving = true;
+					});
+				}
 
 				// Reset mouse movement flag
 				setInterval(() => {
@@ -2350,35 +2557,38 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				}, 100);
 
 				function animateBubbles() {
-					bubbles.forEach((bubble, index) => {
-						const rect = bubble.getBoundingClientRect();
-						const bubbleCenterX = rect.left + rect.width / 2;
-						const bubbleCenterY = rect.top + rect.height / 2;
+					// Skip interactive behavior on touch devices
+					if (!isTouchDevice) {
+						bubbles.forEach((bubble, index) => {
+							const rect = bubble.getBoundingClientRect();
+							const bubbleCenterX = rect.left + rect.width / 2;
+							const bubbleCenterY = rect.top + rect.height / 2;
 
-						const distance = Math.sqrt(
-							Math.pow(mouseX - bubbleCenterX, 2) +
-							Math.pow(mouseY - bubbleCenterY, 2)
-						);
+							const distance = Math.sqrt(
+								Math.pow(mouseX - bubbleCenterX, 2) +
+								Math.pow(mouseY - bubbleCenterY, 2)
+							);
 
-						const maxDistance = 150; // Attraction radius
-						const attractionStrength = Math.max(0, 1 - distance / maxDistance);
+							const maxDistance = 150; // Attraction radius
+							const attractionStrength = Math.max(0, 1 - distance / maxDistance);
 
-						if (attractionStrength > 0 && isMouseMoving) {
-							const angle = Math.atan2(mouseY - bubbleCenterY, mouseX - bubbleCenterX);
-							const moveDistance = attractionStrength * 30; // Max movement distance
+							if (attractionStrength > 0 && isMouseMoving) {
+								const angle = Math.atan2(mouseY - bubbleCenterY, mouseX - bubbleCenterX);
+								const moveDistance = attractionStrength * 30; // Max movement distance
 
-							const currentTransform = bubble.style.transform || '';
-							const translateX = Math.cos(angle) * moveDistance;
-							const translateY = Math.sin(angle) * moveDistance;
+								const currentTransform = bubble.style.transform || '';
+								const translateX = Math.cos(angle) * moveDistance;
+								const translateY = Math.sin(angle) * moveDistance;
 
-							bubble.style.transform = `translate(${translateX}px, ${translateY}px) scale(${1 + attractionStrength * 0.3})`;
-							bubble.classList.add('attracted');
-						} else {
-							// Return to original position smoothly
-							bubble.style.transform = '';
-							bubble.classList.remove('attracted');
-						}
-					});
+								bubble.style.transform = `translate(${translateX}px, ${translateY}px) scale(${1 + attractionStrength * 0.3})`;
+								bubble.classList.add('attracted');
+							} else {
+								// Return to original position smoothly
+								bubble.style.transform = '';
+								bubble.classList.remove('attracted');
+							}
+						});
+					}
 
 					requestAnimationFrame(animateBubbles);
 				}
@@ -2386,18 +2596,20 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				// Start the animation loop
 				animateBubbles();
 
-				// Add some random movement variation
-				bubbles.forEach((bubble, index) => {
-					setInterval(() => {
-						if (!bubble.classList.contains('attracted')) {
-							const randomX = (Math.random() - 0.5) * 20;
-							const randomY = (Math.random() - 0.5) * 20;
-							const randomRotation = (Math.random() - 0.5) * 10;
+				// Add some random movement variation (only on non-touch devices)
+				if (!isTouchDevice) {
+					bubbles.forEach((bubble, index) => {
+						setInterval(() => {
+							if (!bubble.classList.contains('attracted')) {
+								const randomX = (Math.random() - 0.5) * 20;
+								const randomY = (Math.random() - 0.5) * 20;
+								const randomRotation = (Math.random() - 0.5) * 10;
 
-							bubble.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotation}deg)`;
-						}
-					}, 3000 + index * 500); // Stagger the random movements
-				});
+								bubble.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotation}deg)`;
+							}
+						}, 3000 + index * 500); // Stagger the random movements
+					});
+				}
 
 				// ===== SCROLL TO TOP BUTTON =====
 				const scrollToTopBtn = document.getElementById('scrollToTop');
@@ -2433,6 +2645,135 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 						}
 					});
 				});
+
+				// ===== FULLSCREEN VIDEO FUNCTIONALITY =====
+				const fullscreenOverlay = document.getElementById('video-fullscreen-overlay');
+				const fullscreenVideo = document.getElementById('fullscreen-video');
+				const fullscreenPlayPauseBtn = document.getElementById('fullscreen-playPauseBtn');
+				const fullscreenMuteBtn = document.getElementById('fullscreen-muteBtn');
+				const fullscreenNextBtn = document.getElementById('fullscreen-nextVideoBtn');
+				const fullscreenCloseBtn = document.getElementById('fullscreen-close-btn');
+
+				let currentFullscreenVideoIndex = 0;
+				let fullscreenVideoList = [];
+
+				// Add click listeners to portfolio items
+				portfolioItems.forEach((item, index) => {
+					item.addEventListener('click', () => {
+						const video = item.querySelector('video');
+						if (video) {
+							openFullscreenVideo(index);
+						}
+					});
+				});
+
+				function openFullscreenVideo(index) {
+					fullscreenVideoList = Array.from(portfolioItems).map(item => {
+						const video = item.querySelector('video');
+						return video ? video.src : null;
+					}).filter(src => src);
+
+					if (fullscreenVideoList.length === 0) return;
+
+					currentFullscreenVideoIndex = index;
+					loadFullscreenVideo();
+
+					if (fullscreenOverlay) {
+						fullscreenOverlay.classList.add('active');
+					}
+					document.body.style.overflow = 'hidden';
+				}
+
+				function loadFullscreenVideo() {
+					if (fullscreenVideo && fullscreenVideoList[currentFullscreenVideoIndex]) {
+						fullscreenVideo.src = fullscreenVideoList[currentFullscreenVideoIndex];
+						fullscreenVideo.load();
+						fullscreenVideo.play().catch(e => console.log('Fullscreen video play failed:', e));
+						updateFullscreenControls();
+					}
+				}
+
+				function updateFullscreenControls() {
+					if (!fullscreenPlayPauseBtn || !fullscreenMuteBtn) return;
+
+					if (fullscreenVideo.paused) {
+						fullscreenPlayPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+					} else {
+						fullscreenPlayPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+					}
+
+					fullscreenMuteBtn.innerHTML = fullscreenVideo.muted
+						? '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.98 9a.5.5 0 0 0-.5.5v5a.5.5 0 0 0 .5.5h3l5.5 4v-13l-5.5 4h-3zm12.12 1.88L19 7M19 17l-3.88-3.88M9.88 9.88L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+						: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+				}
+
+				// Fullscreen controls event listeners
+				if (fullscreenPlayPauseBtn) {
+					fullscreenPlayPauseBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						if (fullscreenVideo.paused) {
+							fullscreenVideo.play();
+						} else {
+							fullscreenVideo.pause();
+						}
+						updateFullscreenControls();
+					});
+				}
+
+				if (fullscreenMuteBtn) {
+					fullscreenMuteBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						fullscreenVideo.muted = !fullscreenVideo.muted;
+						updateFullscreenControls();
+					});
+				}
+
+				if (fullscreenNextBtn) {
+					fullscreenNextBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						currentFullscreenVideoIndex = (currentFullscreenVideoIndex + 1) % fullscreenVideoList.length;
+						loadFullscreenVideo();
+					});
+				}
+
+				if (fullscreenCloseBtn) {
+					fullscreenCloseBtn.addEventListener('click', closeFullscreen);
+				}
+
+				if (fullscreenOverlay) {
+					fullscreenOverlay.addEventListener('click', (e) => {
+						if (e.target === fullscreenOverlay) {
+							closeFullscreen();
+						}
+					});
+				}
+
+				// Close on Escape key
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && fullscreenOverlay && fullscreenOverlay.classList.contains('active')) {
+						closeFullscreen();
+					}
+				});
+
+				function closeFullscreen() {
+					if (fullscreenOverlay) {
+						fullscreenOverlay.classList.remove('active');
+					}
+					if (fullscreenVideo) {
+						fullscreenVideo.pause();
+					}
+					document.body.style.overflow = '';
+				}
+
+				// Update controls when video state changes
+				if (fullscreenVideo) {
+					fullscreenVideo.addEventListener('play', updateFullscreenControls);
+					fullscreenVideo.addEventListener('pause', updateFullscreenControls);
+					fullscreenVideo.addEventListener('ended', () => {
+						currentFullscreenVideoIndex = (currentFullscreenVideoIndex + 1) % fullscreenVideoList.length;
+						loadFullscreenVideo();
+					});
+				}
 			});
 		</script>
 	</body>

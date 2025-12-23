@@ -6,84 +6,113 @@ const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 // Check admin authentication
+console.log('=== ADMIN AUTH CHECK START ===');
+console.log('Available cookies:', Astro.cookies.getAll().map(c => ({ name: c.name, hasValue: !!c.value })));
+
 const serverSupabase = createSupabaseServerClient(Astro.cookies);
 if (!serverSupabase) {
   console.error('Failed to create server Supabase client');
   return Astro.redirect('/login?error=auth_required');
 }
 
-// Try multiple methods to get the user
+// Try multiple methods to get the user with improved error handling
 let user = null;
 let userIsAdmin = false;
 let authMethod = '';
 
-// Method 1: Try getSession
+console.log('Starting admin authentication check...');
+
+// Method 1: Try getSession (most reliable)
 try {
+  console.log('Trying getSession...');
   const { data: { session }, error: sessionError } = await serverSupabase.auth.getSession();
+  console.log('getSession result:', { hasSession: !!session, hasUser: !!(session?.user), error: sessionError?.message });
+
   if (session && session.user) {
     user = session.user;
     authMethod = 'session';
-    console.log('User authenticated via session:', user.email);
+    console.log('✅ User authenticated via session:', user.email);
+  } else if (sessionError) {
+    console.log('❌ Session error:', sessionError.message);
   }
 } catch (e) {
-  console.log('Session method failed:', e);
+  console.log('❌ Session method exception:', e);
 }
 
-// Method 2: Try getUser directly
+// Method 2: Try getUser directly (fallback)
 if (!user) {
   try {
+    console.log('Trying getUser...');
     const { data: { user: userData }, error: userError } = await serverSupabase.auth.getUser();
+    console.log('getUser result:', { hasUser: !!userData, error: userError?.message });
+
     if (userData) {
       user = userData;
       authMethod = 'getUser';
-      console.log('User authenticated via getUser:', user.email);
+      console.log('✅ User authenticated via getUser:', user.email);
+    } else if (userError) {
+      console.log('❌ getUser error:', userError.message);
     }
   } catch (e) {
-    console.log('getUser method failed:', e);
+    console.log('❌ getUser method exception:', e);
   }
 }
 
-// Method 3: Check for custom user session cookie
+// Method 3: Check for custom user session cookie (backup)
 if (!user) {
+  console.log('Checking custom user session cookie...');
   const userSessionCookie = Astro.cookies.get('user_session');
+  console.log('Custom cookie exists:', !!userSessionCookie?.value);
+
   if (userSessionCookie && userSessionCookie.value) {
     try {
       const userData = JSON.parse(userSessionCookie.value);
+      console.log('Parsed custom cookie data:', userData);
+
       user = {
         id: userData.id,
         email: userData.email,
-        // Add other required user properties
+        user_metadata: { name: userData.name || userData.email }
       };
       userIsAdmin = userData.isAdmin || false;
       authMethod = 'custom_cookie';
-      console.log('User authenticated via custom cookie:', user.email, 'isAdmin:', userIsAdmin);
+      console.log('✅ User authenticated via custom cookie:', user.email, 'isAdmin:', userIsAdmin);
     } catch (e) {
-      console.log('Custom cookie parsing failed:', e);
+      console.log('❌ Custom cookie parsing failed:', e);
     }
   }
 }
 
-// Method 4: Check for session cookie manually and try refresh
+// Method 4: Try to refresh session if we have session cookies
 if (!user) {
+  console.log('Checking for session cookies to refresh...');
   const sessionCookie = Astro.cookies.get('sb-avmiweumvpveykxtamfm-auth-token');
-  if (sessionCookie && sessionCookie.value) {
-    console.log('Found session cookie, attempting manual session retrieval');
-    // Try to refresh or re-establish session
+  const refreshCookie = Astro.cookies.get('sb-avmiweumvpveykxtamfm-auth-token.0'); // Refresh token
+
+  console.log('Session cookies present:', { session: !!sessionCookie?.value, refresh: !!refreshCookie?.value });
+
+  if (sessionCookie?.value || refreshCookie?.value) {
     try {
+      console.log('Attempting session refresh...');
       const { data: refreshData, error: refreshError } = await serverSupabase.auth.refreshSession();
+      console.log('Refresh result:', { hasSession: !!refreshData.session, hasUser: !!(refreshData.session?.user), error: refreshError?.message });
+
       if (refreshData.session && refreshData.session.user) {
         user = refreshData.session.user;
         authMethod = 'refresh';
-        console.log('User authenticated via refresh:', user.email);
+        console.log('✅ User authenticated via refresh:', user.email);
+      } else if (refreshError) {
+        console.log('❌ Refresh error:', refreshError.message);
       }
     } catch (e) {
-      console.log('Refresh method failed:', e);
+      console.log('❌ Refresh method exception:', e);
     }
   }
 }
 
 if (!user) {
-  console.error('All authentication methods failed');
+  console.error('❌ All authentication methods failed - redirecting to login');
+  console.log('Available cookies:', Astro.cookies.getAll().map(c => c.name));
   return Astro.redirect('/login?error=not_authenticated');
 }
 
@@ -106,9 +135,9 @@ if (authMethod !== 'custom_cookie') {
   }
 
   const isAdminByFlag = profile?.is_admin === true;
-  isAdmin = isAdminByEmail || isAdminByFlag;
+  userIsAdmin = isAdminByEmail || isAdminByFlag;
 
-  console.log('Admin check - byEmail:', isAdminByEmail, 'byFlag:', isAdminByFlag, 'final:', isAdmin);
+  console.log('Admin check - byEmail:', isAdminByEmail, 'byFlag:', isAdminByFlag, 'final:', userIsAdmin);
 }
 
 if (!userIsAdmin) {

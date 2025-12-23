@@ -219,10 +219,11 @@ const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 						// Show success animation
 						showSuccessAnimation();
 
-						// Redirect after animation (add extra delay to ensure cookies are set)
+						// Redirect after animation with longer delay to ensure cookies are fully set
 						setTimeout(() => {
+							console.log('Redirecting to:', data.redirectTo);
 							window.location.href = data.redirectTo;
-						}, 3000);
+						}, 4000);
 
 					} catch (err) {
 						console.error('Login error:', err);

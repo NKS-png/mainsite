@@ -1,8 +1,136 @@
 ---
 import '../styles/global.css';
+import { createSupabaseServerClient } from '../lib/supabase';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+// Check authentication on server-side
+const serverSupabase = createSupabaseServerClient(Astro.cookies);
+if (!serverSupabase) {
+  console.error('Failed to create server Supabase client');
+  return Astro.redirect('/login?error=auth_required');
+}
+
+// Try multiple methods to get the user
+let user = null;
+let authMethod = '';
+
+console.log('=== PROFILE AUTH CHECK START ===');
+
+// Method 1: Try getSession
+try {
+  console.log('Trying getSession...');
+  const { data: { session }, error: sessionError } = await serverSupabase.auth.getSession();
+  console.log('getSession result:', { hasSession: !!session, hasUser: !!(session?.user), error: sessionError?.message });
+
+  if (session && session.user) {
+    user = session.user;
+    authMethod = 'session';
+    console.log('✅ User authenticated via session:', user.email);
+  }
+} catch (e) {
+  console.log('❌ Session method exception:', e);
+}
+
+// Method 2: Try getUser directly
+if (!user) {
+  try {
+    console.log('Trying getUser...');
+    const { data: { user: userData }, error: userError } = await serverSupabase.auth.getUser();
+    console.log('getUser result:', { hasUser: !!userData, error: userError?.message });
+
+    if (userData) {
+      user = userData;
+      authMethod = 'getUser';
+      console.log('✅ User authenticated via getUser:', user.email);
+    }
+  } catch (e) {
+    console.log('❌ getUser method exception:', e);
+  }
+}
+
+// Method 3: Check for custom user session cookie
+if (!user) {
+  console.log('Checking custom user session cookie...');
+  const userSessionCookie = Astro.cookies.get('user_session');
+  console.log('Custom cookie exists:', !!userSessionCookie?.value);
+
+  if (userSessionCookie && userSessionCookie.value) {
+    try {
+      const userData = JSON.parse(userSessionCookie.value);
+      console.log('Parsed custom cookie data:', userData);
+
+      user = {
+        id: userData.id,
+        email: userData.email,
+        user_metadata: { name: userData.name || userData.email }
+      };
+      authMethod = 'custom_cookie';
+      console.log('✅ User authenticated via custom cookie:', user.email);
+    } catch (e) {
+      console.log('❌ Custom cookie parsing failed:', e);
+    }
+  }
+}
+
+if (!user) {
+  console.error('❌ All authentication methods failed - redirecting to login');
+  console.log('Available cookies:', Astro.cookies.getAll().map(c => c.name));
+  return Astro.redirect('/login?error=not_authenticated');
+}
+
+// Try to get profile data from profiles table
+let profileData = null;
+try {
+  const { data: profile, error: profileError } = await serverSupabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .single();
+
+  if (!profileError && profile) {
+    profileData = profile;
+    console.log('✅ Profile data found:', profile);
+  } else {
+    console.log('❌ Profile data not found, creating new profile:', profileError?.message);
+
+    // Create profile record if it doesn't exist
+    const { data: newProfile, error: createError } = await serverSupabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        full_name: user.user_metadata?.full_name ||
+                   user.user_metadata?.name ||
+                   user.email?.split('@')[0] ||
+                   'User'
+      })
+      .select('full_name')
+      .single();
+
+    if (!createError && newProfile) {
+      profileData = newProfile;
+      console.log('✅ Profile created successfully:', newProfile);
+    } else {
+      console.log('❌ Failed to create profile:', createError?.message);
+    }
+  }
+} catch (e) {
+  console.log('❌ Error with profile operations:', e);
+}
+
+// Make user data available to the template
+const userData = {
+  id: user.id,
+  email: user.email,
+  name: profileData?.full_name ||
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email?.split('@')[0] ||
+        'User'
+};
+
+console.log('📋 Final userData for template:', userData);
 ---
 
 <html lang="en">
@@ -225,106 +353,197 @@ const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 			</div>
 		</main>
 
-		<script define:vars={{ supabaseUrl, supabaseKey }}>
-			import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+		<script define:vars={{ userData }}>
+			// Load current user data (already authenticated server-side)
+			document.addEventListener('DOMContentLoaded', function() {
+				console.log('Loading user data from server:', userData);
 
-			const supabase = createClient(supabaseUrl, supabaseKey);
+				const emailElement = document.getElementById('current-email');
+				const nameElement = document.getElementById('current-name');
+				const updateNameInput = document.getElementById('update-name');
 
-			// Load current user data
-			document.addEventListener('DOMContentLoaded', async function() {
-				try {
-					const { data: { user } } = await supabase.auth.getUser();
+				if (emailElement) emailElement.textContent = userData.email || '';
+				if (nameElement) nameElement.textContent = userData.name || '';
+				if (updateNameInput) updateNameInput.value = userData.name || '';
 
-					if (user) {
-						document.getElementById('current-email').textContent = user.email;
-						document.getElementById('current-name').textContent = user.user_metadata?.full_name || user.email;
-						document.getElementById('update-name').value = user.user_metadata?.full_name || '';
-					} else {
-						// Not logged in, redirect to login
-						window.location.href = '/login';
-					}
-				} catch (error) {
-					console.error('Error loading user data:', error);
-					window.location.href = '/login';
+				// Update Header UI immediately based on server auth
+				const authButtons = document.getElementById('authButtons');
+				const userMenu = document.getElementById('userMenu');
+				const welcomeText = document.getElementById('welcomeText');
+				const profileCartIcon = document.getElementById('profileCartIcon');
+
+				if (authButtons) authButtons.style.display = 'none';
+				if (userMenu) userMenu.style.display = 'block';
+				if (profileCartIcon) profileCartIcon.style.display = 'flex';
+
+				if (welcomeText && userData.name) {
+					welcomeText.textContent = `Hi, ${userData.name.split(' ')[0]}`;
+				}
+
+				// Sync localStorage for client-side scripts
+				const storedUser = localStorage.getItem('user');
+				if (!storedUser) {
+					localStorage.setItem('user', JSON.stringify({
+						id: userData.id,
+						email: userData.email,
+						name: userData.name
+					}));
 				}
 			});
 
 			// Handle profile update
-			document.getElementById('profile-form').addEventListener('submit', async (e) => {
-				e.preventDefault();
+			const profileForm = document.getElementById('profile-form');
+			if (profileForm) {
+				profileForm.addEventListener('submit', async (e) => {
+					e.preventDefault();
 
-				const updateBtn = document.getElementById('update-profile-btn');
-				const messageContainer = document.getElementById('message-container');
-				const successMessage = document.getElementById('success-message');
-				const errorMessage = document.getElementById('error-message');
-
-				// Reset messages
-				messageContainer.style.display = 'none';
-				successMessage.style.display = 'none';
-				errorMessage.style.display = 'none';
-
-				updateBtn.disabled = true;
-				updateBtn.textContent = 'Updating...';
-
-				try {
-					const newName = document.getElementById('update-name').value.trim();
-					const currentPassword = document.getElementById('current-password').value;
-					const newPassword = document.getElementById('new-password').value;
-					const confirmPassword = document.getElementById('confirm-password').value;
-
-					// Update name if provided
-					if (newName) {
-						const { error: updateError } = await supabase.auth.updateUser({
-							data: { full_name: newName }
-						});
-
-						if (updateError) throw updateError;
+					if (!supabase) {
+						console.error('Supabase client not available');
+						return;
 					}
 
-					// Update password if provided
-					if (newPassword) {
-						if (newPassword !== confirmPassword) {
-							throw new Error('New passwords do not match');
+					const updateBtn = document.getElementById('update-profile-btn') as HTMLButtonElement;
+					const messageContainer = document.getElementById('message-container');
+					const successMessage = document.getElementById('success-message');
+					const errorMessage = document.getElementById('error-message');
+
+					// Reset messages
+					if (messageContainer) messageContainer.style.display = 'none';
+					if (successMessage) successMessage.style.display = 'none';
+					if (errorMessage) errorMessage.style.display = 'none';
+
+					if (updateBtn) {
+						updateBtn.disabled = true;
+						updateBtn.textContent = 'Updating...';
+					}
+
+					try {
+						const updateNameInput = document.getElementById('update-name') as HTMLInputElement;
+						const currentPasswordInput = document.getElementById('current-password') as HTMLInputElement;
+						const newPasswordInput = document.getElementById('new-password') as HTMLInputElement;
+						const confirmPasswordInput = document.getElementById('confirm-password') as HTMLInputElement;
+
+						const newName = updateNameInput?.value?.trim() || '';
+						const currentPassword = currentPasswordInput?.value || '';
+						const newPassword = newPasswordInput?.value || '';
+						const confirmPassword = confirmPasswordInput?.value || '';
+
+						// Update name if provided
+						if (newName) {
+							console.log('Updating user name to:', newName);
+
+							// First, try updating the profiles table (this is the proper way for user profile data)
+							const { data: { user } } = await supabase.auth.getUser();
+							if (user) {
+								const { data: profileData, error: profileError } = await supabase
+									.from('profiles')
+									.upsert({
+										id: user.id,
+										full_name: newName
+									})
+									.select();
+
+								if (profileError) {
+									console.error('Profile table update error:', profileError);
+									// Fallback to auth metadata update
+									console.log('Falling back to auth metadata update...');
+								} else {
+									console.log('Profile table updated successfully:', profileData);
+								}
+							}
+
+							// Also try updating auth user metadata (for consistency)
+							const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+								data: { full_name: newName }
+							});
+
+							if (updateError) {
+								console.error('Auth metadata update error:', updateError);
+								// Don't throw error here since profile table update might have worked
+							} else {
+								console.log('Auth metadata update response:', updateData);
+							}
+
+							// Always update UI with the new name (since we know what it should be)
+							console.log('Updating UI with name:', newName);
+							updateUIWithName(newName);
 						}
 
-						if (newPassword.length < 6) {
-							throw new Error('Password must be at least 6 characters');
+						// Helper function to update UI with name
+						function updateUIWithName(name) {
+							const nameElement = document.getElementById('current-name');
+							const updateNameInput = document.getElementById('update-name');
+							const welcomeText = document.getElementById('welcomeText');
+
+							if (nameElement) {
+								nameElement.textContent = name;
+							}
+							if (updateNameInput) {
+								updateNameInput.value = name;
+							}
+							if (welcomeText) {
+								welcomeText.textContent = `Hi, ${name.split(' ')[0]}`;
+							}
+
+							// Update localStorage
+							const storedUserStr = localStorage.getItem('user');
+							if (storedUserStr) {
+								const storedUser = JSON.parse(storedUserStr);
+								storedUser.name = name;
+								localStorage.setItem('user', JSON.stringify(storedUser));
+							}
 						}
 
-						const { error: passwordError } = await supabase.auth.updateUser({
-							password: newPassword
-						});
+						// Update password if provided
+						if (newPassword) {
+							if (newPassword !== confirmPassword) {
+								throw new Error('New passwords do not match');
+							}
 
-						if (passwordError) throw passwordError;
+							if (newPassword.length < 6) {
+								throw new Error('Password must be at least 6 characters');
+							}
+
+							console.log('Updating password...');
+							const { error: passwordError } = await supabase.auth.updateUser({
+								password: newPassword
+							});
+
+							if (passwordError) {
+								console.error('Password update error:', passwordError);
+								throw passwordError;
+							}
+							console.log('Password updated successfully');
+						}
+
+						// Show success message
+						if (messageContainer) messageContainer.style.display = 'block';
+						if (successMessage) successMessage.style.display = 'block';
+
+						// Clear form
+						if (updateNameInput) updateNameInput.value = '';
+						if (currentPasswordInput) currentPasswordInput.value = '';
+						if (newPasswordInput) newPasswordInput.value = '';
+						if (confirmPasswordInput) confirmPasswordInput.value = '';
+
+						console.log('Profile update completed successfully');
+
+					} catch (error) {
+						console.error('Profile update error:', error);
+						if (messageContainer) messageContainer.style.display = 'block';
+						if (errorMessage) {
+							errorMessage.style.display = 'block';
+							const errorMsg = error instanceof Error ? error.message : 'Error updating profile. Please try again.';
+							errorMessage.textContent = errorMsg;
+						}
+					} finally {
+						if (updateBtn) {
+							updateBtn.disabled = false;
+							updateBtn.textContent = 'Update Profile';
+						}
 					}
-
-					// Show success message
-					messageContainer.style.display = 'block';
-					successMessage.style.display = 'block';
-
-					// Update local storage
-					const user = JSON.parse(localStorage.getItem('user') || '{}');
-					if (newName) {
-						user.name = newName;
-						localStorage.setItem('user', JSON.stringify(user));
-					}
-
-					// Clear form
-					document.getElementById('update-name').value = '';
-					document.getElementById('current-password').value = '';
-					document.getElementById('new-password').value = '';
-					document.getElementById('confirm-password').value = '';
-
-				} catch (error) {
-					console.error('Profile update error:', error);
-					messageContainer.style.display = 'block';
-					errorMessage.style.display = 'block';
-					errorMessage.textContent = error.message || 'Error updating profile. Please try again.';
-				} finally {
-					updateBtn.disabled = false;
-					updateBtn.textContent = 'Update Profile';
-				}
-			});
+				});
+			}
 
 			// Theme toggle functionality
 			document.addEventListener('DOMContentLoaded', function() {

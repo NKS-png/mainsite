@@ -8,7 +8,21 @@ console.log('Supabase URL present:', !!supabaseUrl);
 console.log('Supabase Anon Key present:', !!supabaseAnonKey);
 
 // Client-side Supabase client
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'supabase-js-web'
+    }
+  }
+}) : null;
 
 // Server-side Supabase client for Astro
 export function createSupabaseServerClient(cookies: any) {
@@ -21,8 +35,9 @@ export function createSupabaseServerClient(cookies: any) {
     const client = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name: string) {
-          console.log('Getting cookie:', name);
-          return cookies.get(name);
+          const cookie = cookies.get(name);
+          console.log('Getting cookie:', name, 'exists:', !!cookie?.value);
+          return cookie?.value || null;
         },
         set(name: string, value: string, options: any) {
           console.log('Setting cookie:', name);
