@@ -68,6 +68,15 @@ CREATE TABLE uploads (
    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
  );
 
+-- Comments table
+CREATE TABLE comments (
+   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+   user_id UUID REFERENCES auth.users(id) NOT NULL,
+   content TEXT NOT NULL,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+ );
+
 -- RLS Policies
 
 -- Profiles: Users can read/update their own profile
@@ -121,6 +130,12 @@ CREATE POLICY "Users view own uploads" ON uploads FOR SELECT USING (auth.uid() =
 CREATE POLICY "Admin manage uploads" ON uploads FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
+
+-- Comments: Public read, authenticated users can create, users can update/delete own comments
+CREATE POLICY "Public read comments" ON comments FOR SELECT USING (true);
+CREATE POLICY "Authenticated users create comments" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users update own comments" ON comments FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users delete own comments" ON comments FOR DELETE USING (auth.uid() = user_id);
 
 -- Storage policies for buckets
 -- Animation bucket

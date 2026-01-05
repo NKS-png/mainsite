@@ -2,6 +2,7 @@
 import { supabase, createSupabaseServerClient } from '../lib/supabase';
 import '../styles/global.css';
 import Header from '../components/Header.tsx';
+import Comments from '../components/Comments.tsx';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 
@@ -118,6 +119,273 @@ const portfolioItems = uploads.map((item, index) => ({
         height: 100vh;
         object-fit: cover;
       }
+
+      /* Interactive Bubble Background */
+      .bubble-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .bubble {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(11, 121, 255, 0.1), rgba(245, 158, 11, 0.1));
+        backdrop-filter: blur(1px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: float 20s ease-in-out infinite;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .bubble:hover {
+        transform: scale(1.2);
+        background: linear-gradient(135deg, rgba(11, 121, 255, 0.2), rgba(245, 158, 11, 0.2));
+      }
+
+      .bubble[data-size="large"] {
+        width: 120px;
+        height: 120px;
+        animation-duration: 25s;
+        animation-delay: 0s;
+      }
+
+      .bubble[data-size="medium"] {
+        width: 80px;
+        height: 80px;
+        animation-duration: 20s;
+        animation-delay: -5s;
+      }
+
+      .bubble[data-size="small"] {
+        width: 60px;
+        height: 60px;
+        animation-duration: 15s;
+        animation-delay: -10s;
+      }
+
+      /* Different bubble positions and paths */
+      .bubble:nth-child(1) { top: 10%; left: 10%; animation: float1 25s ease-in-out infinite; }
+      .bubble:nth-child(2) { top: 20%; right: 15%; animation: float2 20s ease-in-out infinite; }
+      .bubble:nth-child(3) { top: 30%; left: 20%; animation: float3 18s ease-in-out infinite; }
+      .bubble:nth-child(4) { top: 15%; right: 25%; animation: float4 22s ease-in-out infinite; }
+      .bubble:nth-child(5) { top: 25%; left: 30%; animation: float5 19s ease-in-out infinite; }
+      .bubble:nth-child(6) { top: 35%; right: 10%; animation: float6 21s ease-in-out infinite; }
+      .bubble:nth-child(7) { top: 5%; left: 40%; animation: float7 24s ease-in-out infinite; }
+      .bubble:nth-child(8) { top: 40%; right: 30%; animation: float8 17s ease-in-out infinite; }
+      .bubble:nth-child(9) { top: 10%; left: 50%; animation: float9 23s ease-in-out infinite; }
+      .bubble:nth-child(10) { top: 45%; right: 5%; animation: float10 20s ease-in-out infinite; }
+      .bubble:nth-child(11) { top: 20%; left: 60%; animation: float11 18s ease-in-out infinite; }
+      .bubble:nth-child(12) { top: 50%; right: 35%; animation: float12 22s ease-in-out infinite; }
+      .bubble:nth-child(13) { top: 30%; left: 70%; animation: float13 19s ease-in-out infinite; }
+      .bubble:nth-child(14) { top: 55%; right: 20%; animation: float14 21s ease-in-out infinite; }
+      .bubble:nth-child(15) { top: 40%; left: 80%; animation: float15 16s ease-in-out infinite; }
+
+      /* Floating animations with different paths */
+      @keyframes float1 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(30px, -40px) rotate(90deg); }
+        50% { transform: translate(-20px, -80px) rotate(180deg); }
+        75% { transform: translate(40px, -20px) rotate(270deg); }
+      }
+
+      @keyframes float2 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-35px, -30px) rotate(-90deg); }
+        50% { transform: translate(25px, -70px) rotate(-180deg); }
+        75% { transform: translate(-15px, -10px) rotate(-270deg); }
+      }
+
+      @keyframes float3 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(40px, -50px) rotate(120deg); }
+        50% { transform: translate(-30px, -90px) rotate(240deg); }
+        75% { transform: translate(20px, -30px) rotate(360deg); }
+      }
+
+      @keyframes float4 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-25px, -35px) rotate(-120deg); }
+        50% { transform: translate(35px, -65px) rotate(-240deg); }
+        75% { transform: translate(-10px, -15px) rotate(-360deg); }
+      }
+
+      @keyframes float5 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(45px, -55px) rotate(150deg); }
+        50% { transform: translate(-40px, -85px) rotate(300deg); }
+        75% { transform: translate(25px, -25px) rotate(450deg); }
+      }
+
+      @keyframes float6 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-30px, -45px) rotate(-150deg); }
+        50% { transform: translate(40px, -75px) rotate(-300deg); }
+        75% { transform: translate(-20px, -35px) rotate(-450deg); }
+      }
+
+      @keyframes float7 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(35px, -40px) rotate(180deg); }
+        50% { transform: translate(-25px, -80px) rotate(360deg); }
+        75% { transform: translate(30px, -20px) rotate(540deg); }
+      }
+
+      @keyframes float8 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-40px, -50px) rotate(-180deg); }
+        50% { transform: translate(30px, -70px) rotate(-360deg); }
+        75% { transform: translate(-25px, -40px) rotate(-540deg); }
+      }
+
+      @keyframes float9 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(50px, -60px) rotate(210deg); }
+        50% { transform: translate(-35px, -95px) rotate(420deg); }
+        75% { transform: translate(40px, -30px) rotate(630deg); }
+      }
+
+      @keyframes float10 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-45px, -55px) rotate(-210deg); }
+        50% { transform: translate(35px, -85px) rotate(-420deg); }
+        75% { transform: translate(-30px, -45px) rotate(-630deg); }
+      }
+
+      @keyframes float11 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(55px, -45px) rotate(240deg); }
+        50% { transform: translate(-50px, -75px) rotate(480deg); }
+        75% { transform: translate(35px, -35px) rotate(720deg); }
+      }
+
+      @keyframes float12 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-50px, -60px) rotate(-240deg); }
+        50% { transform: translate(45px, -90px) rotate(-480deg); }
+        75% { transform: translate(-40px, -50px) rotate(-720deg); }
+      }
+
+      @keyframes float13 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(40px, -35px) rotate(270deg); }
+        50% { transform: translate(-45px, -65px) rotate(540deg); }
+        75% { transform: translate(50px, -40px) rotate(810deg); }
+      }
+
+      @keyframes float14 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(-35px, -40px) rotate(-270deg); }
+        50% { transform: translate(50px, -60px) rotate(-540deg); }
+        75% { transform: translate(-45px, -55px) rotate(-810deg); }
+      }
+
+      @keyframes float15 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(60px, -50px) rotate(300deg); }
+        50% { transform: translate(-55px, -80px) rotate(600deg); }
+        75% { transform: translate(45px, -45px) rotate(900deg); }
+      }
+
+      /* Dark theme bubble colors */
+      [data-theme="dark"] .bubble {
+        background: linear-gradient(135deg, rgba(11, 121, 255, 0.15), rgba(245, 158, 11, 0.15));
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      [data-theme="dark"] .bubble:hover {
+        background: linear-gradient(135deg, rgba(11, 121, 255, 0.25), rgba(245, 158, 11, 0.25));
+      }
+
+      /* Bubble interaction states */
+      .bubble.attracted {
+        animation-play-state: paused;
+        z-index: 1;
+      }
+
+      /* Cursor Follower */
+      .cursor-follower {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1070;
+        transition: transform 0.1s ease-out;
+        box-shadow: 0 0 20px rgba(11, 121, 255, 0.6);
+        animation: cursorPulse 2s ease-in-out infinite;
+        mix-blend-mode: screen;
+      }
+
+      .cursor-follower::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 50%;
+        animation: cursorRing 3s ease-in-out infinite;
+      }
+
+      @keyframes cursorPulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      @keyframes cursorRing {
+        0% {
+          transform: scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+
+      /* Hide cursor follower on touch devices */
+      @media (hover: none) and (pointer: coarse) {
+        .cursor-follower {
+          display: none;
+        }
+      }
+
+      /* Performance optimization - reduce bubbles on smaller screens */
+      @media (max-width: 1024px) {
+        .bubble:nth-child(n+10) {
+          display: none;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .bubble-background {
+          display: none; /* Hide bubbles on mobile for performance */
+        }
+      }
+
+      /* Reduce motion for accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .bubble {
+          animation: none;
+        }
+
+        .bubble.attracted {
+          transform: none !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -129,17 +397,6 @@ const portfolioItems = uploads.map((item, index) => ({
       </div>
     </div>
 
-    <!-- Testing Banner -->
-    <div id="testing-banner" class="testing-banner" style="display: none;">
-      <div class="testing-content">
-        <div class="testing-icon">🚧</div>
-        <div class="testing-text">
-          <strong>Website Under Testing</strong>
-          <span>Some features are under development and in testing/review phase</span>
-        </div>
-        <button class="testing-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
-      </div>
-    </div>
 
     <!-- Header (shared component) -->
     <Header client:load />
@@ -258,9 +515,53 @@ const portfolioItems = uploads.map((item, index) => ({
       </div>
     </section>
 
-    <!-- Custom Cursor -->
-    <div class="cursor"></div>
-    <div class="cursor-follower"></div>
+    <!-- Donation Section -->
+    <!-- Donations are optional and support ongoing development -->
+    <!-- This section is non-intrusive and highlights community support -->
+    <section class="donation-section">
+      <div class="section-container">
+        <div class="donation-content">
+          <div class="donation-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>Support This Project</h2>
+          <p>Your support helps keep this project alive and growing. All donations are optional and go directly toward development, community features, and creating more content.</p>
+          <a href="upi://pay?pa=9971158189@pthdfc&pn=NKScreates&am=0&cu=INR" target="_blank" rel="noopener noreferrer" class="donation-button">
+            <span>Support with UPI</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comments Section -->
+    <Comments client:load />
+
+    <!-- Interactive Bubble Background -->
+    <div class="bubble-background" id="bubbleBackground">
+      <div class="bubble" data-size="large"></div>
+      <div class="bubble" data-size="medium"></div>
+      <div class="bubble" data-size="small"></div>
+      <div class="bubble" data-size="large"></div>
+      <div class="bubble" data-size="medium"></div>
+      <div class="bubble" data-size="small"></div>
+      <div class="bubble" data-size="large"></div>
+      <div class="bubble" data-size="medium"></div>
+      <div class="bubble" data-size="small"></div>
+      <div class="bubble" data-size="large"></div>
+      <div class="bubble" data-size="medium"></div>
+      <div class="bubble" data-size="small"></div>
+      <div class="bubble" data-size="large"></div>
+      <div class="bubble" data-size="medium"></div>
+      <div class="bubble" data-size="small"></div>
+    </div>
+
+    <!-- Cursor Follower -->
+    <div class="cursor-follower" id="cursorFollower"></div>
 
     <!-- Loading Screen Script -->
     <script>
@@ -290,17 +591,122 @@ const portfolioItems = uploads.map((item, index) => ({
           }
         }, 2000);
 
-        // Show testing banner after 3 seconds
-        setTimeout(function() {
-          const testingBanner = document.getElementById('testing-banner');
-          if (testingBanner) {
-            testingBanner.style.display = 'block';
-          }
-        }, 3000);
       });
     </script>
 
     <script type="module" src="/scripts/animations.js"></script>
+
+    <!-- Cursor Follower and Bubble Animation Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // ===== CURSOR FOLLOWER =====
+        const cursorFollower = document.getElementById('cursorFollower') as HTMLElement;
+        let cursorX = 0;
+        let cursorY = 0;
+        let followerX = 0;
+        let followerY = 0;
+        let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Only enable cursor follower on non-touch devices
+        if (!isTouchDevice && cursorFollower) {
+          document.addEventListener('mousemove', (e) => {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+          });
+
+          function updateCursorFollower() {
+            // Smooth following with easing
+            const easing = 0.15;
+            followerX += (cursorX - followerX) * easing;
+            followerY += (cursorY - followerY) * easing;
+
+            cursorFollower.style.left = `${followerX - 10}px`; // Center the 20px element
+            cursorFollower.style.top = `${followerY - 10}px`;
+
+            requestAnimationFrame(updateCursorFollower);
+          }
+
+          updateCursorFollower();
+        }
+
+        // ===== INTERACTIVE BUBBLE BACKGROUND =====
+        const bubbles = document.querySelectorAll('.bubble') as NodeListOf<HTMLElement>;
+        let mouseX = 0;
+        let mouseY = 0;
+        let isMouseMoving = false;
+
+        // Only enable mouse interaction on non-touch devices
+        if (!isTouchDevice) {
+          document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            isMouseMoving = true;
+          });
+        }
+
+        // Reset mouse movement flag
+        setInterval(() => {
+          isMouseMoving = false;
+        }, 100);
+
+        function animateBubbles() {
+          // Skip interactive behavior on touch devices
+          if (!isTouchDevice) {
+            bubbles.forEach((bubble, index) => {
+              const bubbleElement = bubble as HTMLElement;
+              const rect = bubbleElement.getBoundingClientRect();
+              const bubbleCenterX = rect.left + rect.width / 2;
+              const bubbleCenterY = rect.top + rect.height / 2;
+
+              const distance = Math.sqrt(
+                Math.pow(mouseX - bubbleCenterX, 2) +
+                Math.pow(mouseY - bubbleCenterY, 2)
+              );
+
+              const maxDistance = 150; // Attraction radius
+              const attractionStrength = Math.max(0, 1 - distance / maxDistance);
+
+              if (attractionStrength > 0 && isMouseMoving) {
+                const angle = Math.atan2(mouseY - bubbleCenterY, mouseX - bubbleCenterX);
+                const moveDistance = attractionStrength * 30; // Max movement distance
+
+                const currentTransform = bubbleElement.style.transform || '';
+                const translateX = Math.cos(angle) * moveDistance;
+                const translateY = Math.sin(angle) * moveDistance;
+
+                bubbleElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${1 + attractionStrength * 0.3})`;
+                bubbleElement.classList.add('attracted');
+              } else {
+                // Return to original position smoothly
+                bubbleElement.style.transform = '';
+                bubbleElement.classList.remove('attracted');
+              }
+            });
+          }
+
+          requestAnimationFrame(animateBubbles);
+        }
+
+        // Start the animation loop
+        animateBubbles();
+
+        // Add some random movement variation (only on non-touch devices)
+        if (!isTouchDevice) {
+          bubbles.forEach((bubble, index) => {
+            const bubbleElement = bubble as HTMLElement;
+            setInterval(() => {
+              if (!bubbleElement.classList.contains('attracted')) {
+                const randomX = (Math.random() - 0.5) * 20;
+                const randomY = (Math.random() - 0.5) * 20;
+                const randomRotation = (Math.random() - 0.5) * 10;
+
+                bubbleElement.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotation}deg)`;
+              }
+            }, 3000 + index * 500); // Stagger the random movements
+          });
+        }
+      });
+    </script>
 
     <script define:vars={{ videoUploads, supabaseUrl, userEmail, displayName }}>
       // Video rotation functionality
