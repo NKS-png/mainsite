@@ -8,15 +8,11 @@ interface User {
   is_admin?: boolean;
 }
 
-interface CartSummary {
-  itemCount: number;
-  subtotal: number;
-  total: number;
-}
+// Cart functionality removed - site now redirects to Fiverr for services
 
 export default function Header() {
   const [user, setUser] = createSignal<User | null>(null);
-  const [cartSummary, setCartSummary] = createSignal<CartSummary>({ itemCount: 0, subtotal: 0, total: 0 });
+  // Cart functionality removed - site now redirects to Fiverr for services
   const [isDarkTheme, setIsDarkTheme] = createSignal(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = createSignal(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
@@ -300,12 +296,6 @@ export default function Header() {
                     <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
                   </svg>
                   Profile
-                </a>
-                <a href="/orders" class="dropdown-item" onClick={closeUserMenu}>
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 12l2 2 4-4M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  Orders
                 </a>
                 {user()?.is_admin && (
                   <a href="/admin" class="dropdown-item" onClick={closeUserMenu}>

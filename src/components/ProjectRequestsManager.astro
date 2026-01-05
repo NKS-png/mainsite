@@ -1,0 +1,722 @@
+---
+// src/components/ProjectRequestsManager.astro
+// Admin dashboard component for managing project requests
+// Shows pending requests with accept/reject functionality
+// Fiverr integration instructions on acceptance
+---
+
+<div class="content-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Project Requests
+    </h2>
+  </div>
+
+  <div class="requests-list" id="requestsList">
+    <!-- Requests will be populated by JavaScript -->
+  </div>
+</div>
+
+<!-- Request Details Modal -->
+<div class="request-modal" id="requestModal">
+  <div class="request-modal-overlay"></div>
+  <div class="request-modal-container">
+    <div class="request-modal-header">
+      <h3 id="requestModalTitle">Project Request Details</h3>
+      <button class="request-modal-close" id="requestModalClose">×</button>
+    </div>
+    <div class="request-modal-content" id="requestModalContent">
+      <!-- Request details will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div class="rejection-modal" id="rejectionModal">
+  <div class="rejection-modal-overlay"></div>
+  <div class="rejection-modal-container">
+    <div class="rejection-modal-header">
+      <h3>Reject Project Request</h3>
+      <button class="rejection-modal-close" id="rejectionModalClose">×</button>
+    </div>
+    <div class="rejection-modal-content">
+      <p class="rejection-intro">Provide an optional reason for rejection (the client will see this):</p>
+      <textarea 
+        id="rejectionReasonText" 
+        placeholder="e.g., Outside my current capacity, not aligned with my services, budget constraints, etc."
+        class="rejection-textarea"
+      ></textarea>
+      <div class="rejection-actions">
+        <button id="rejectionCancelBtn" class="action-btn preview-btn">Cancel</button>
+        <button id="rejectionSubmitBtn" class="action-btn reject-btn">Reject Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Requests List */
+  .requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+  }
+
+  .request-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-6);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+
+  .request-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+  }
+
+  .request-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-4);
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+  }
+
+  .request-info h4 {
+    margin: 0 0 var(--spacing-1) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+
+  .request-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .request-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+
+  .request-status {
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: 20px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-pending {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+
+  .status-accepted {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .status-rejected {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+
+  .request-details {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .request-detail-item {
+    margin-bottom: var(--spacing-3);
+    padding-bottom: var(--spacing-3);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .request-detail-item:last-child {
+    border-bottom: none;
+  }
+
+  .request-detail-label {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-1);
+  }
+
+  .request-detail-value {
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .request-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+  }
+
+  .request-actions .action-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Request Modal */
+  .request-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .request-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .request-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(8px);
+  }
+
+  .request-modal-container {
+    position: relative;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    max-width: 600px;
+    max-height: 90vh;
+    width: 90%;
+    overflow: hidden;
+    box-shadow: var(--shadow-2xl);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .request-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-6);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .request-modal-header h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+
+  .request-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+  }
+
+  .request-modal-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .request-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+  }
+
+  /* Rejection Modal */
+  .rejection-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .rejection-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .rejection-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(8px);
+  }
+
+  .rejection-modal-container {
+    position: relative;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    max-width: 500px;
+    width: 90%;
+    padding: var(--spacing-6);
+    box-shadow: var(--shadow-2xl);
+    z-index: 2501;
+  }
+
+  .rejection-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .rejection-modal-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+
+  .rejection-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rejection-intro {
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+
+  .rejection-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: var(--spacing-3);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+    resize: vertical;
+  }
+
+  .rejection-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(11, 121, 255, 0.1);
+  }
+
+  .rejection-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+  }
+
+  .rejection-actions .action-btn {
+    flex: 1;
+    padding: var(--spacing-3) var(--spacing-4);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem var(--spacing-6);
+    color: var(--text-secondary);
+  }
+
+  .empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--spacing-4);
+    opacity: 0.5;
+  }
+
+  .empty-state h3 {
+    margin: 0 0 var(--spacing-2) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+</style>
+
+<script>
+  // Project Requests Management
+  document.addEventListener('DOMContentLoaded', function() {
+    let currentRequestId = null;
+
+    // Load project requests
+    async function loadProjectRequests() {
+      try {
+        const response = await fetch('/api/requests/admin/list');
+        if (!response.ok) {
+          console.error('Failed to load requests:', response.status);
+          document.getElementById('requestsList').innerHTML = `
+            <div class="empty-state">
+              <p>Unable to load requests. Please ensure you're logged in as admin.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const data = await response.json();
+        const requests = data.requests || [];
+        const requestsList = document.getElementById('requestsList');
+
+        requestsList.innerHTML = '';
+
+        if (requests.length === 0) {
+          requestsList.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <h3>No project requests yet</h3>
+              <p>When clients submit project requests, they'll appear here for review.</p>
+            </div>
+          `;
+          return;
+        }
+
+        requests.forEach(request => {
+          const requestCard = document.createElement('div');
+          requestCard.className = 'request-card';
+          const statusClass = `status-${request.status}`;
+          const createdDate = new Date(request.created_at).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+
+          let actionButtons = '';
+          if (request.status === 'pending') {
+            actionButtons = `
+              <button class="action-btn approve-btn" data-request-id="${request.id}">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Accept
+              </button>
+              <button class="action-btn reject-btn" data-request-id="${request.id}">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Reject
+              </button>
+            `;
+          } else if (request.status === 'accepted') {
+            actionButtons = `
+              <button class="action-btn preview-btn" data-request-id="${request.id}">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                View Details
+              </button>
+            `;
+          }
+
+          requestCard.innerHTML = `
+            <div class="request-header">
+              <div class="request-info">
+                <h4>${request.name}</h4>
+                <div class="request-meta">
+                  <div class="request-meta-item">
+                    <span>📧</span>
+                    <span>${request.email}</span>
+                  </div>
+                  <div class="request-meta-item">
+                    <span>📋</span>
+                    <span>${request.project_type.charAt(0).toUpperCase() + request.project_type.slice(1)}</span>
+                  </div>
+                  <div class="request-meta-item">
+                    <span>💰</span>
+                    <span>${request.budget_range}</span>
+                  </div>
+                  <div class="request-meta-item">
+                    <span>📅</span>
+                    <span>${createdDate}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="request-status ${statusClass}">${request.status}</div>
+            </div>
+            <div class="request-details">
+              <div class="request-detail-item">
+                <div class="request-detail-label">Project Description</div>
+                <div class="request-detail-value">${request.description}</div>
+              </div>
+              ${request.deadline ? `
+                <div class="request-detail-item">
+                  <div class="request-detail-label">Requested Deadline</div>
+                  <div class="request-detail-value">${new Date(request.deadline).toLocaleDateString()}</div>
+                </div>
+              ` : ''}
+              ${request.rejection_reason ? `
+                <div class="request-detail-item">
+                  <div class="request-detail-label">Rejection Reason</div>
+                  <div class="request-detail-value">${request.rejection_reason}</div>
+                </div>
+              ` : ''}
+            </div>
+            <div class="request-actions">
+              <button class="action-btn preview-btn" data-request-id="${request.id}">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                View Full Details
+              </button>
+              ${actionButtons}
+            </div>
+          `;
+
+          // Add event listeners
+          const previewBtn = requestCard.querySelector('[data-request-id]:first-of-type');
+          previewBtn?.addEventListener('click', () => showRequestModal(request));
+
+          const approveBtn = requestCard.querySelector('.approve-btn');
+          approveBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            acceptRequest(request.id);
+          });
+
+          const rejectBtn = requestCard.querySelector('.reject-btn');
+          rejectBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentRequestId = request.id;
+            document.getElementById('rejectionModal').classList.add('show');
+          });
+
+          requestsList.appendChild(requestCard);
+        });
+
+      } catch (error) {
+        console.error('Error loading requests:', error);
+        document.getElementById('requestsList').innerHTML = `
+          <div class="empty-state">
+            <p>Error loading requests: ${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Show request details modal
+    function showRequestModal(request) {
+      const modal = document.getElementById('requestModal');
+      const content = document.getElementById('requestModalContent');
+
+      const fiverUrl = 'https://www.fiverr.com/nikhilsingh'; // Replace with your actual Fiverr URL
+
+      content.innerHTML = `
+        <div class="request-detail-section">
+          <h4>Client Information</h4>
+          <div class="request-detail-item">
+            <div class="request-detail-label">Name</div>
+            <div class="request-detail-value">${request.name}</div>
+          </div>
+          <div class="request-detail-item">
+            <div class="request-detail-label">Email</div>
+            <div class="request-detail-value"><a href="mailto:${request.email}">${request.email}</a></div>
+          </div>
+        </div>
+
+        <div class="request-detail-section">
+          <h4>Project Information</h4>
+          <div class="request-detail-item">
+            <div class="request-detail-label">Project Type</div>
+            <div class="request-detail-value">${request.project_type.charAt(0).toUpperCase() + request.project_type.slice(1)}</div>
+          </div>
+          <div class="request-detail-item">
+            <div class="request-detail-label">Budget Range</div>
+            <div class="request-detail-value">${request.budget_range}</div>
+          </div>
+          ${request.deadline ? `
+            <div class="request-detail-item">
+              <div class="request-detail-label">Requested Deadline</div>
+              <div class="request-detail-value">${new Date(request.deadline).toLocaleDateString()}</div>
+            </div>
+          ` : ''}
+          <div class="request-detail-item">
+            <div class="request-detail-label">Description</div>
+            <div class="request-detail-value">${request.description}</div>
+          </div>
+        </div>
+
+        ${request.status === 'accepted' ? `
+          <div class="request-detail-section" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+            <h4 style="color: white; margin-top: 0;">✓ Request Accepted</h4>
+            <p style="margin: 0;">Client has been instructed to place the order on your Fiverr profile:</p>
+            <p style="margin: 8px 0 0 0;"><a href="${fiverUrl}" target="_blank" style="color: white; text-decoration: underline;">${fiverUrl}</a></p>
+          </div>
+        ` : request.status === 'rejected' ? `
+          <div class="request-detail-section" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+            <h4 style="color: white; margin-top: 0;">✗ Request Rejected</h4>
+            ${request.rejection_reason ? `<p style="margin: 0;">${request.rejection_reason}</p>` : ''}
+          </div>
+        ` : ''}
+      `;
+
+      modal.classList.add('show');
+    }
+
+    // Accept request
+    async function acceptRequest(requestId) {
+      if (!confirm('Accept this project request? The client will be directed to your Fiverr profile.')) return;
+
+      try {
+        const response = await fetch('/api/requests/admin/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ request_id: requestId })
+        });
+
+        if (!response.ok) throw new Error('Failed to accept request');
+
+        alert('Request accepted! Client will be notified to visit your Fiverr profile.');
+        loadProjectRequests();
+      } catch (error) {
+        console.error('Accept error:', error);
+        alert('Failed to accept request: ' + error.message);
+      }
+    }
+
+    // Reject request (with reason)
+    document.getElementById('rejectionSubmitBtn')?.addEventListener('click', async () => {
+      const reason = document.getElementById('rejectionReasonText').value.trim();
+
+      try {
+        const response = await fetch('/api/requests/admin/reject', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            request_id: currentRequestId,
+            rejection_reason: reason || null
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to reject request');
+
+        alert('Request rejected.');
+        document.getElementById('rejectionModal').classList.remove('show');
+        document.getElementById('rejectionReasonText').value = '';
+        loadProjectRequests();
+      } catch (error) {
+        console.error('Reject error:', error);
+        alert('Failed to reject request: ' + error.message);
+      }
+    });
+
+    // Modal close handlers
+    document.getElementById('requestModalClose')?.addEventListener('click', () => {
+      document.getElementById('requestModal').classList.remove('show');
+    });
+
+    document.getElementById('rejectionModalClose')?.addEventListener('click', () => {
+      document.getElementById('rejectionModal').classList.remove('show');
+      document.getElementById('rejectionReasonText').value = '';
+    });
+
+    // Close modals when clicking overlay
+    document.getElementById('requestModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'requestModal') {
+        document.getElementById('requestModal').classList.remove('show');
+      }
+    });
+
+    document.getElementById('rejectionModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'rejectionModal') {
+        document.getElementById('rejectionModal').classList.remove('show');
+        document.getElementById('rejectionReasonText').value = '';
+      }
+    });
+
+    document.getElementById('rejectionCancelBtn')?.addEventListener('click', () => {
+      document.getElementById('rejectionModal').classList.remove('show');
+      document.getElementById('rejectionReasonText').value = '';
+    });
+
+    // Initial load
+    loadProjectRequests();
+
+    // Reload requests every 30 seconds
+    setInterval(loadProjectRequests, 30000);
+  });
+</script>

@@ -1,0 +1,395 @@
+---
+// src/pages/request-project.astro
+// Public page - no auth required
+// Form for submitting project requests
+
+import Header from '../components/Header.tsx';
+import type { AstroGlobal } from 'astro';
+---
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request a Project | Nikhil Singh</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .helper-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .trust-message {
+            background: #ecf0f1;
+            border-left: 4px solid #27ae60;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 30px 0;
+            font-size: 0.95rem;
+            color: #27551a;
+        }
+
+        .trust-message strong {
+            color: #27ae60;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .success-screen {
+            display: none;
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .success-screen.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .success-screen h2 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+            color: #27ae60;
+        }
+
+        .success-screen p {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            background: #ffe0e0;
+            color: #c0392b;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #c0392b;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Request a Project</h1>
+        <p class="subtitle">
+            Have a creative project in mind? Let's talk about it. 
+            Tell me what you're looking for and I'll get back to you within 2-3 days.
+        </p>
+
+        <form id="requestForm" class="request-form">
+            <!-- Contact Information -->
+            <div class="form-section">
+                <div class="section-title">Your Information</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            required
+                            placeholder="John Doe"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required
+                            placeholder="john@example.com"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Details -->
+            <div class="form-section">
+                <div class="section-title">Project Details</div>
+                
+                <div class="form-group">
+                    <label for="projectType">What type of project? <span class="required">*</span></label>
+                    <select id="projectType" name="project_type" required>
+                        <option value="">-- Select a project type --</option>
+                        <option value="animation">Animation (2D, 3D, motion graphics)</option>
+                        <option value="video">Video (editing, production, effects)</option>
+                        <option value="web">Web (design, development, frontend)</option>
+                        <option value="other">Other (something custom)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="budgetRange">What's your budget range? <span class="required">*</span></label>
+                    <select id="budgetRange" name="budget_range" required>
+                        <option value="">-- Select a range --</option>
+                        <option value="under-500">Under $500</option>
+                        <option value="500-1000">$500 - $1,000</option>
+                        <option value="1000-2500">$1,000 - $2,500</option>
+                        <option value="2500-5000">$2,500 - $5,000</option>
+                        <option value="above-5000">$5,000+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">When do you need it completed?</label>
+                    <input 
+                        type="date" 
+                        id="deadline" 
+                        name="deadline"
+                    />
+                    <p class="helper-text">This is just an estimate. We'll discuss the actual timeline after I review your project.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Describe your project <span class="required">*</span></label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        required
+                        placeholder="Tell me about your project, what you need, any inspiration, references, or specific requirements..."
+                    ></textarea>
+                    <p class="helper-text">The more details, the better. Include references, examples, or links if possible.</p>
+                </div>
+            </div>
+
+            <!-- Trust Message -->
+            <div class="trust-message">
+                <strong>✓ No upfront payment required.</strong> 
+                Submit your project, and I'll review it within 2-3 days. 
+                If I accept, I'll send you my Fiverr profile with a custom offer and timeline. 
+                You'll only pay through Fiverr, which means buyer protection for both of us.
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn">
+                Submit Project Request
+            </button>
+        </form>
+
+        <!-- Success Screen -->
+        <div class="success-screen" id="successScreen">
+            <div class="success-icon">✓</div>
+            <h2>Request Received!</h2>
+            <p>I've received your project request and will review it carefully.</p>
+            <p style="margin-bottom: 24px; color: #444;">
+                <strong>Next steps:</strong> I'll get back to you within 2-3 business days. 
+                Check your email (<span id="confirmEmail"></span>) for my response.
+            </p>
+            <p style="color: #7f8c8d; font-size: 0.95rem;">
+                In the meantime, feel free to check out my portfolio and past work.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('requestForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successScreen = document.getElementById('successScreen');
+        const confirmEmail = document.getElementById('confirmEmail');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Clear previous errors
+            errorMessage.classList.remove('show');
+
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                project_type: document.getElementById('projectType').value,
+                budget_range: document.getElementById('budgetRange').value,
+                deadline: document.getElementById('deadline').value || null,
+                description: document.getElementById('description').value
+            };
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
+
+            try {
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to submit request');
+                }
+
+                // Show success screen
+                confirmEmail.textContent = formData.email;
+                form.style.display = 'none';
+                successScreen.classList.add('show');
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = error.message || 'Something went wrong. Please try again.';
+                errorMessage.classList.add('show');
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit Project Request';
+            }
+        });
+    </script>
+</body>
+</html>

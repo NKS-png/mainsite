@@ -4756,3 +4756,98 @@ a, button, .cta-primary, .cta-secondary, .portfolio-item, .social-link, #hero-sh
     display: none;
   }
 }
+
+/* Donation Section Styles */
+.donation-section {
+  padding: var(--spacing-20) 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.donation-content {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.donation-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--spacing-6);
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-lg);
+}
+
+.donation-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.donation-content h2 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-4);
+  color: var(--text-primary);
+}
+
+.donation-content p {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-8);
+  line-height: var(--line-height-relaxed);
+}
+
+.donation-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4) var(--spacing-8);
+  background: var(--primary-color);
+  color: var(--text-inverse);
+  text-decoration: none;
+  border-radius: var(--radius-xl);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--primary-color);
+}
+
+.donation-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.donation-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive donation section */
+@media (max-width: 768px) {
+  .donation-section {
+    padding: var(--spacing-16) 0;
+  }
+
+  .donation-content h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .donation-content p {
+    font-size: var(--font-size-base);
+  }
+
+  .donation-button {
+    width: 100%;
+    justify-content: center;
+    padding: var(--spacing-4) var(--spacing-6);
+    font-size: var(--font-size-base);
+  }
+}

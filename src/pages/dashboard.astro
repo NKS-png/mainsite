@@ -640,6 +640,62 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				z-index: 1;
 			}
 
+			/* Cursor Follower */
+			.cursor-follower {
+				position: fixed;
+				width: 20px;
+				height: 20px;
+				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+				border-radius: 50%;
+				pointer-events: none;
+				z-index: var(--z-tooltip);
+				transition: transform 0.1s ease-out;
+				box-shadow: 0 0 20px rgba(11, 121, 255, 0.6);
+				animation: cursorPulse 2s ease-in-out infinite;
+				mix-blend-mode: screen;
+			}
+
+			.cursor-follower::before {
+				content: '';
+				position: absolute;
+				top: -10px;
+				left: -10px;
+				right: -10px;
+				bottom: -10px;
+				border: 2px solid rgba(245, 158, 11, 0.3);
+				border-radius: 50%;
+				animation: cursorRing 3s ease-in-out infinite;
+			}
+
+			@keyframes cursorPulse {
+				0%, 100% {
+					transform: scale(1);
+					opacity: 0.8;
+				}
+				50% {
+					transform: scale(1.2);
+					opacity: 1;
+				}
+			}
+
+			@keyframes cursorRing {
+				0% {
+					transform: scale(0.5);
+					opacity: 1;
+				}
+				100% {
+					transform: scale(2);
+					opacity: 0;
+				}
+			}
+
+			/* Hide cursor follower on touch devices */
+			@media (hover: none) and (pointer: coarse) {
+				.cursor-follower {
+					display: none;
+				}
+			}
+
 			/* Performance optimization - reduce bubbles on smaller screens */
 			@media (max-width: 1024px) {
 				.bubble:nth-child(n+10) {
@@ -782,102 +838,6 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				box-shadow: var(--shadow-xl);
 			}
 
-			/* Stats Grid */
-			.stats-section {
-				padding: var(--spacing-16) 0;
-				background: var(--bg-secondary);
-				border-radius: var(--radius-2xl);
-				margin-bottom: var(--spacing-16);
-			}
-
-			.stats-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-				gap: var(--spacing-8);
-				max-width: 1200px;
-				margin: 0 auto;
-				padding: 0 var(--spacing-6);
-			}
-
-			.stat-card {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-2xl);
-				padding: var(--spacing-8);
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-6);
-				transition: all var(--transition-normal);
-				box-shadow: var(--shadow-md);
-				position: relative;
-				overflow: hidden;
-			}
-
-			.stat-card::before {
-				content: '';
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: linear-gradient(135deg, rgba(11, 121, 255, 0.05), rgba(245, 158, 11, 0.05));
-				opacity: 0;
-				transition: opacity var(--transition-normal);
-				z-index: -1;
-			}
-
-			.stat-card:hover {
-				transform: translateY(-8px);
-				box-shadow: var(--shadow-xl);
-				border-color: var(--primary-color);
-			}
-
-			.stat-card:hover::before {
-				opacity: 1;
-			}
-
-			.stat-icon {
-				width: 64px;
-				height: 64px;
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				border-radius: var(--radius-xl);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				flex-shrink: 0;
-				color: var(--text-inverse);
-				box-shadow: var(--shadow-lg);
-			}
-
-			.stat-icon svg {
-				width: 32px;
-				height: 32px;
-			}
-
-			.stat-content {
-				flex: 1;
-			}
-
-			.stat-value {
-				font-size: var(--font-size-4xl);
-				font-weight: var(--font-weight-extrabold);
-				color: var(--text-primary);
-				margin-bottom: var(--spacing-2);
-				display: block;
-			}
-
-			.stat-label {
-				font-size: var(--font-size-lg);
-				color: var(--text-secondary);
-				font-weight: var(--font-weight-medium);
-			}
-
-			/* Orders Section */
-			.orders-section {
-				padding: var(--spacing-16) 0;
-				background: var(--bg-primary);
-			}
-
 			/* Contact Section */
 			.contact-section {
 				padding: var(--spacing-16) 0;
@@ -994,142 +954,6 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				max-width: 600px;
 				margin: 0 auto;
 				font-weight: var(--font-weight-medium);
-			}
-
-			/* Order Cards */
-			.order-card {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-xl);
-				padding: var(--spacing-6);
-				margin-bottom: var(--spacing-6);
-				transition: all var(--transition-normal);
-				box-shadow: var(--shadow-md);
-			}
-
-			.order-card:hover {
-				transform: translateY(-4px);
-				box-shadow: var(--shadow-lg);
-				border-color: var(--primary-color);
-			}
-
-			.order-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: var(--spacing-4);
-			}
-
-			.order-title {
-				font-size: var(--font-size-xl);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-			}
-
-			.order-status {
-				padding: var(--spacing-2) var(--spacing-4);
-				border-radius: var(--radius-full);
-				font-size: var(--font-size-xs);
-				font-weight: var(--font-weight-semibold);
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-
-			.status-pending {
-				background: linear-gradient(135deg, #f59e0b, #d97706);
-				color: white;
-			}
-
-			.status-completed {
-				background: linear-gradient(135deg, #10b981, #059669);
-				color: white;
-			}
-
-			.status-in-progress {
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				color: white;
-			}
-
-			.order-details {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-				gap: var(--spacing-6);
-				font-size: var(--font-size-sm);
-				color: var(--text-secondary);
-			}
-
-			.order-detail-item {
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-2);
-			}
-
-			.detail-label {
-				font-weight: var(--font-weight-medium);
-				color: var(--text-tertiary);
-				font-size: var(--font-size-xs);
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-
-			.detail-value {
-				color: var(--text-primary);
-				font-weight: var(--font-weight-semibold);
-				font-size: var(--font-size-base);
-			}
-
-			/* Empty State */
-			.empty-state {
-				text-align: center;
-				padding: var(--spacing-20) var(--spacing-6);
-				color: var(--text-secondary);
-				background: var(--bg-secondary);
-				border-radius: var(--radius-2xl);
-				margin: var(--spacing-8) 0;
-			}
-
-			.empty-state svg {
-				width: 80px;
-				height: 80px;
-				margin: 0 auto var(--spacing-6);
-				opacity: 0.6;
-				color: var(--text-tertiary);
-			}
-
-			.empty-state h3 {
-				margin: 0 0 var(--spacing-4) 0;
-				font-size: var(--font-size-2xl);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-			}
-
-			.empty-state p {
-				margin: 0;
-				font-size: var(--font-size-lg);
-				max-width: 500px;
-				margin: 0 auto var(--spacing-8);
-			}
-
-			.cta-button {
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				color: white;
-				border: none;
-				padding: var(--spacing-4) var(--spacing-8);
-				border-radius: var(--radius-xl);
-				font-weight: var(--font-weight-semibold);
-				font-size: var(--font-size-lg);
-				cursor: pointer;
-				transition: all var(--transition-fast);
-				text-decoration: none;
-				display: inline-flex;
-				align-items: center;
-				gap: var(--spacing-2);
-				box-shadow: var(--shadow-lg);
-			}
-
-			.cta-button:hover {
-				transform: translateY(-2px);
-				box-shadow: var(--shadow-xl);
 			}
 
 			/* Featured Video Section */
@@ -1968,6 +1792,9 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 			<div class="bubble" data-size="small"></div>
 		</div>
 
+		<!-- Cursor Follower -->
+		<div class="cursor-follower" id="cursorFollower"></div>
+
 
 		<!-- Scroll to Top Button -->
 		<button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
@@ -1995,11 +1822,11 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 				<div class="welcome-content">
 					<h1 class="welcome-title">
 						<span class="welcome-line">Welcome{storedUser?.user_metadata?.name ? `, ${storedUser.user_metadata.name}` : storedUser?.email ? `, ${storedUser.email.split('@')[0]}` : ''}!</span>
-						<span class="welcome-line">Your Creative</span>
-						<span class="welcome-line">Dashboard</span>
+						<span class="welcome-line">Explore My</span>
+						<span class="welcome-line">Portfolio</span>
 					</h1>
 					<p class="welcome-subtitle">
-						Track orders, explore your portfolio, and manage your creative projects with style and precision.
+						Discover my creative work, view featured projects, and connect with me across social platforms.
 					</p>
 					<div class="welcome-actions">
 						<button class="cta-primary" onclick="document.getElementById('portfolio').scrollIntoView({behavior: 'smooth'})">
@@ -2013,43 +1840,20 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 			</div>
 		</section>
 
-		<!-- Stats Section -->
-		<section class="stats-section">
-			<div class="stats-grid">
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="totalOrders">{userOrders.length}</div>
-						<div class="stat-label">Total Orders</div>
-					</div>
+		<!-- Fiverr Section -->
+		<section class="fiverr-section">
+			<div class="section-container">
+				<div class="section-header">
+					<h2 class="section-title">Interested in Ordering?</h2>
+					<p class="section-subtitle">Go to my Fiverr if interested in ordering</p>
 				</div>
-
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+				<div class="social-links-grid">
+					<a href="https://www.fiverr.com/nksbro" target="_blank" rel="noopener noreferrer" class="social-link fiverr">
+						<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+							<path d="M2 6v12c0 1.1.9 2 2 2h14V6H4c-1.1 0-2 .9-2 2zm14 0l2-4h2l-2 4zm2 12l-2 4h-2l2-4z"/>
 						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="portfolioItems">{uniquePortfolioData.length}</div>
-						<div class="stat-label">Portfolio Items</div>
-					</div>
-				</div>
-
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value">$0</div>
-						<div class="stat-label">Total Spent</div>
-					</div>
+						<span>Fiverr</span>
+					</a>
 				</div>
 			</div>
 		</section>
@@ -2188,57 +1992,6 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 			</div>
 		</section>
 
-		<!-- Orders Section -->
-		<section class="orders-section">
-			<div class="section-container">
-				<div class="section-header">
-					<h2 class="section-title">Your Orders</h2>
-					<p class="section-subtitle">Track the progress of your creative projects</p>
-				</div>
-
-				{userOrders && userOrders.length > 0 ? (
-					<div class="orders-list">
-						{userOrders.map(order => (
-							<div class="order-card">
-								<div class="order-header">
-									<h3 class="order-title">Order #{order.id}</h3>
-									<span class={`order-status status-${order.status?.toLowerCase().replace('_', '-') || 'pending'}`}>
-										{order.status?.replace('_', ' ') || 'Pending'}
-									</span>
-								</div>
-								<div class="order-details">
-									<div class="order-detail-item">
-										<span class="detail-label">Service</span>
-										<span class="detail-value">{order.service_title || 'N/A'}</span>
-									</div>
-									<div class="order-detail-item">
-										<span class="detail-label">Price</span>
-										<span class="detail-value">{order.price ? `$${order.price}` : 'N/A'}</span>
-									</div>
-									<div class="order-detail-item">
-										<span class="detail-label">Delivery</span>
-										<span class="detail-value">{order.delivery_time || 'N/A'}</span>
-									</div>
-									<div class="order-detail-item">
-										<span class="detail-label">Date</span>
-										<span class="detail-value">{new Date(order.created_at).toLocaleDateString()}</span>
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
-				) : (
-					<div class="empty-state">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-						<h3>No orders yet</h3>
-						<p>You haven't placed any orders yet. Start your creative journey today!</p>
-						<a href="/services" class="cta-button">Browse Services</a>
-					</div>
-				)}
-			</div>
-		</section>
 
 
 		<!-- Fullscreen Video Modal -->
@@ -2535,12 +2288,41 @@ const uniquePortfolioData = finalPortfolioData.filter((item, index, self) =>
 					updateMuteIcon();
 				}
 
+				// ===== CURSOR FOLLOWER =====
+				const cursorFollower = document.getElementById('cursorFollower');
+				let cursorX = 0;
+				let cursorY = 0;
+				let followerX = 0;
+				let followerY = 0;
+				let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+				// Only enable cursor follower on non-touch devices
+				if (!isTouchDevice && cursorFollower) {
+					document.addEventListener('mousemove', (e) => {
+						cursorX = e.clientX;
+						cursorY = e.clientY;
+					});
+
+					function updateCursorFollower() {
+						// Smooth following with easing
+						const easing = 0.15;
+						followerX += (cursorX - followerX) * easing;
+						followerY += (cursorY - followerY) * easing;
+
+						cursorFollower.style.left = `${followerX - 10}px`; // Center the 20px element
+						cursorFollower.style.top = `${followerY - 10}px`;
+
+						requestAnimationFrame(updateCursorFollower);
+					}
+
+					updateCursorFollower();
+				}
+
 				// ===== INTERACTIVE BUBBLE BACKGROUND =====
 				const bubbles = document.querySelectorAll('.bubble');
 				let mouseX = 0;
 				let mouseY = 0;
 				let isMouseMoving = false;
-				let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 				// Only enable mouse interaction on non-touch devices
 				if (!isTouchDevice) {
