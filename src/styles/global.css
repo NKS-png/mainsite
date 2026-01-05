@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Orange+Juice&display=swap');
+
 /* Fix Connect & Collaborate buttons pressable */
 .collaboration-card, .card-btn {
   pointer-events: auto !important;

@@ -36,10 +36,14 @@ export const GET: APIRoute = async ({ cookies }) => {
     const userIds = [...new Set(comments.map(comment => comment.user_id))];
 
     // Fetch profiles for these users
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, full_name, is_admin')
       .in('id', userIds);
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+    }
 
     // Create a map of user_id to profile
     const profileMap = new Map();
@@ -52,6 +56,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Format comments with display names
     const formattedComments = comments.map(comment => {
       const profile = profileMap.get(comment.user_id);
+      // Use full_name from Supabase profile, or 'Anonymous' as fallback
       const displayName = profile?.full_name || 'Anonymous';
       const isAdmin = profile?.is_admin || false;
 
