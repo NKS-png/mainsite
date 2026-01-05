@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onMount } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 
 interface Comment {
   id: string;
