@@ -5,16 +5,19 @@ class SoundManager {
   private backgroundGain: GainNode | null = null;
   private isBackgroundPlaying = false;
 
-  private initAudioContext() {
+  private async initAudioContext() {
     if (!this.audioContext) {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
     }
     return this.audioContext;
   }
 
   // Generate a simple click sound
-  private createClickSound(frequency: number = 800, duration: number = 0.1) {
-    const ctx = this.initAudioContext();
+  private async createClickSound(frequency: number = 800, duration: number = 0.1) {
+    const ctx = await this.initAudioContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
@@ -32,17 +35,17 @@ class SoundManager {
   }
 
   // Generate a toggle/switch sound
-  private createToggleSound() {
-    const ctx = this.initAudioContext();
+  private async createToggleSound() {
+    const ctx = await this.initAudioContext();
 
     // Create two quick tones for toggle effect
-    this.createClickSound(600, 0.08);
-    setTimeout(() => this.createClickSound(800, 0.08), 50);
+    await this.createClickSound(600, 0.08);
+    setTimeout(async () => await this.createClickSound(800, 0.08), 50);
   }
 
   // Generate a magical sound for GIF/media play
-  private createMagicSound() {
-    const ctx = this.initAudioContext();
+  private async createMagicSound() {
+    const ctx = await this.initAudioContext();
 
     // Create a longer sequence of ascending tones for better sync
     const frequencies = [523, 587, 659, 698, 784, 880, 988, 1047]; // C, D, E, F, G, A, B, C (C major scale)
@@ -70,8 +73,8 @@ class SoundManager {
   }
 
   // Create ambient background music
-  private createAmbientMusic() {
-    const ctx = this.initAudioContext();
+  private async createAmbientMusic() {
+    const ctx = await this.initAudioContext();
 
     // Create multiple oscillators for ambient sound
     const oscillators = [];
@@ -109,8 +112,8 @@ class SoundManager {
   }
 
   // Generate guitar-like sounds for different pages
-  private createGuitarStrum(frequencies: number[], delays: number[] = []) {
-    const ctx = this.initAudioContext();
+  private async createGuitarStrum(frequencies: number[], delays: number[] = []) {
+    const ctx = await this.initAudioContext();
 
     frequencies.forEach((freq, index) => {
       const delay = delays[index] || 0;
@@ -134,19 +137,19 @@ class SoundManager {
   }
 
   // Page-specific guitar sounds
-  private createHomePageSound() {
+  private async createHomePageSound() {
     // Major chord strum - C major
-    this.createGuitarStrum([261.63, 329.63, 392.00], [0, 50, 100]); // C, E, G
+    await this.createGuitarStrum([261.63, 329.63, 392.00], [0, 50, 100]); // C, E, G
   }
 
-  private createPortfolioSound() {
+  private async createPortfolioSound() {
     // Minor chord - A minor for creative feel
-    this.createGuitarStrum([220, 261.63, 329.63], [0, 30, 60]); // A, C, E
+    await this.createGuitarStrum([220, 261.63, 329.63], [0, 30, 60]); // A, C, E
   }
 
-  private createAboutSound() {
+  private async createAboutSound() {
     // Single sustained note - E
-    const ctx = this.initAudioContext();
+    const ctx = await this.initAudioContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
@@ -163,65 +166,65 @@ class SoundManager {
     oscillator.stop(ctx.currentTime + 1.5);
   }
 
-  private createServicesSound() {
+  private async createServicesSound() {
     // Quick arpeggio - C major scale
     const frequencies = [261.63, 293.66, 329.63, 349.23, 392.00]; // C, D, E, F, G
     const delays = [0, 100, 200, 300, 400];
-    this.createGuitarStrum(frequencies, delays);
+    await this.createGuitarStrum(frequencies, delays);
   }
 
-  private createDashboardSound() {
+  private async createDashboardSound() {
     // Power chord - E5
-    this.createGuitarStrum([82.41, 123.47], [0, 20]); // E, B (octave down)
+    await this.createGuitarStrum([82.41, 123.47], [0, 20]); // E, B (octave down)
   }
 
   // Public methods
-  playClick() {
-    this.createClickSound(800, 0.1);
+  async playClick() {
+    await this.createClickSound(800, 0.1);
   }
 
-  playToggle() {
-    this.createToggleSound();
+  async playToggle() {
+    await this.createToggleSound();
   }
 
-  playButton() {
-    this.createClickSound(700, 0.12);
+  async playButton() {
+    await this.createClickSound(700, 0.12);
   }
 
-  playMagic() {
-    this.createMagicSound();
+  async playMagic() {
+    await this.createMagicSound();
   }
 
   // Page entry sounds
-  playHomePageSound() {
-    this.createHomePageSound();
+  async playHomePageSound() {
+    await this.createHomePageSound();
   }
 
-  playPortfolioSound() {
-    this.createPortfolioSound();
+  async playPortfolioSound() {
+    await this.createPortfolioSound();
   }
 
-  playAboutSound() {
-    this.createAboutSound();
+  async playAboutSound() {
+    await this.createAboutSound();
   }
 
-  playServicesSound() {
-    this.createServicesSound();
+  async playServicesSound() {
+    await this.createServicesSound();
   }
 
-  playDashboardSound() {
-    this.createDashboardSound();
+  async playDashboardSound() {
+    await this.createDashboardSound();
   }
 
-  startBackgroundMusic() {
+  async startBackgroundMusic() {
     if (this.isBackgroundPlaying) return;
 
-    const ctx = this.initAudioContext();
+    const ctx = await this.initAudioContext();
     this.backgroundGain = ctx.createGain();
     this.backgroundGain.connect(ctx.destination);
     this.backgroundGain.gain.setValueAtTime(0.03, ctx.currentTime); // Very low volume
 
-    const oscillators = this.createAmbientMusic();
+    const oscillators = await this.createAmbientMusic();
 
     // Start all oscillators
     oscillators.forEach(({ oscillator, modulationOsc }) => {

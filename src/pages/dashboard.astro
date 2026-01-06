@@ -572,12 +572,10 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 
 			window.addEventListener('load', () => {
 				initReels();
-				// Play dashboard sound on non-mobile
-				if (!window.isMobile) {
-					import('../lib/sound.ts').then(({ playDashboardSound }) => {
-						playDashboardSound();
-					}).catch(err => console.log('Dashboard sound not available:', err));
-				}
+				// Play dashboard sound
+				import('../lib/sound.ts').then(async ({ playDashboardSound }) => {
+					await playDashboardSound();
+				}).catch(err => console.log('Dashboard sound not available:', err));
 			});
 		</script>
 	</body>
