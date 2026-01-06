@@ -917,7 +917,7 @@ const portfolioItems = uploads.map((item, index) => ({
           }
         }
 
-        // Hide loading screen after 2 seconds
+        // Hide loading screen after 1 second
         setTimeout(function() {
           if (loadingScreen) {
             loadingScreen.classList.add('fade-out');
@@ -935,13 +935,13 @@ const portfolioItems = uploads.map((item, index) => ({
                 }).catch(err => console.log('Home page sound not available:', err));
               }
 
-              // Show welcome popup after 6 seconds from page load
+              // Show welcome popup after 5.5 seconds from page load
               setTimeout(function() {
                 showWelcomePopup();
-              }, 4000); // Additional 4 seconds after loading screen fades (total 6 seconds)
+              }, 4500); // Additional 4.5 seconds after loading screen fades (total ~6 seconds)
             }, 500);
           }
-        }, 2000);
+        }, 1000);
 
         // Close popup when clicking outside
         const popup = document.getElementById('welcome-popup');
