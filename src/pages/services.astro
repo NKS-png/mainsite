@@ -1,63 +1,282 @@
 ---
-import Header from '../components/Header.tsx';
-import '../styles/global.css';
+import Header from "../components/Header.tsx";
+import "../styles/global.css";
 
-// This site does not handle direct service transactions
-// All services are redirected to Fiverr for security and buyer protection
+const fiverrUrl = "https://www.fiverr.com/nksbro";
 ---
 
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Services - NKScreates</title>
-  </head>
-  <body>
-    <Header client:load />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Services — NKScreates</title>
 
-    <main style="max-width: 800px; margin: 4rem auto; padding: 0 1rem; text-align: center;">
-      <!-- This page redirects users to Fiverr for all service transactions -->
-      <!-- No direct ordering or payment processing happens on this site -->
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-      <div style="margin-bottom: 3rem;">
-        <h1 style="margin:0 0 1rem 0; font-size:2.5rem; color: var(--text-primary);">Services</h1>
-        <p style="margin:0; font-size:1.1rem; color: var(--text-secondary); line-height: 1.6;">
-          All creative services are handled through Fiverr for your security and buyer protection.
-          Payments and project management are processed via Fiverr's trusted platform.
+  <style>
+    /* ================= THEME ================= */
+    :root {
+      --primary:#4aa3ff;
+      --accent:#f1c40f;
+
+      --bg:#f4f1ea;
+      --card:#ffffff;
+      --text:#1a1a1a;
+      --border:#1a1a1a;
+      --shadow:#00000020;
+
+      --head:'Cabin Sketch',cursive;
+      --body:'Space Mono',monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg:#0b0b0b;
+      --card:#141414;
+      --text:#f4f1ea;
+      --border:#f4f1ea;
+      --shadow:#00000080;
+    }
+
+    /* ================= BASE ================= */
+    body{
+      margin:0;
+      font-family:var(--body);
+      background:var(--bg);
+      color:var(--text);
+      transition:.3s;
+      cursor:none;
+    }
+    @media (hover:none){ body{cursor:auto;} }
+
+    h1,h2,h3{
+      font-family:var(--head);
+      letter-spacing:1px;
+      margin:0;
+    }
+
+    /* ================= LAYOUT ================= */
+    .container{
+      max-width:900px;
+      margin:auto;
+      padding:8rem 1.5rem 4rem;
+      text-align:center;
+      position:relative;
+      z-index:2;
+    }
+
+    /* ================= HERO ================= */
+    .title{
+      font-size:4rem;
+      color:var(--primary);
+      text-shadow:3px 3px 0 var(--accent);
+    }
+
+    .subtitle{
+      max-width:620px;
+      margin:1.5rem auto 3rem;
+      font-size:1rem;
+      opacity:.85;
+    }
+
+    /* ================= BUTTON ================= */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:1rem;
+      padding:1rem 3rem;
+      background:var(--primary);
+      color:#000;
+      text-decoration:none;
+      font-family:var(--head);
+      font-size:1.5rem;
+      border-radius:50px;
+      border:2px solid var(--border);
+      box-shadow:6px 6px 0 var(--accent);
+      transition:.2s;
+    }
+
+    [data-theme="dark"] .btn{
+      color:#000;
+    }
+
+    .btn:hover{
+      transform:scale(1.05) rotate(-2deg);
+      background:var(--accent);
+    }
+
+    /* ================= SERVICES ================= */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:2rem;
+      margin:4rem 0;
+    }
+
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      padding:2rem;
+      border-radius:16px;
+      transition:.2s;
+      box-shadow:4px 4px 0 var(--shadow);
+    }
+
+    .card:hover{
+      transform:translateY(-6px);
+      box-shadow:8px 8px 0 var(--primary);
+    }
+
+    .icon{
+      font-size:2.5rem;
+      margin-bottom:.5rem;
+    }
+
+    .desc{
+      font-size:.9rem;
+      opacity:.85;
+      margin-top:1rem;
+      line-height:1.6;
+    }
+
+    .mini{
+      display:inline-block;
+      margin-top:1.2rem;
+      font-size:.85rem;
+      font-weight:bold;
+      color:var(--primary);
+      text-decoration:none;
+    }
+
+    /* ================= HOW IT WORKS ================= */
+    .section{
+      margin-top:5rem;
+      border-top:3px dashed var(--border);
+      padding-top:3rem;
+    }
+
+    .steps{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:2rem;
+      margin-top:2rem;
+    }
+
+    .step{
+      border:2px solid var(--border);
+      padding:1.5rem;
+      border-radius:20px;
+      background:rgba(74,163,255,.08);
+      text-align:left;
+    }
+
+    /* ================= NOTICE ================= */
+    .notice{
+      margin:4rem auto;
+      padding:2rem;
+      max-width:620px;
+      border:3px solid var(--border);
+      background:var(--card);
+      box-shadow:6px 6px 0 var(--shadow);
+    }
+
+    /* ================= FOOTER ================= */
+    .footer{
+      font-size:.8rem;
+      opacity:.6;
+      font-style:italic;
+      margin-top:2rem;
+    }
+
+    /* ================= CURSOR ================= */
+    .cursor{
+      position:fixed;
+      width:20px;
+      height:20px;
+      border:2px solid var(--border);
+      border-radius:50%;
+      pointer-events:none;
+      transform:translate(-50%,-50%);
+      z-index:999;
+    }
+  </style>
+</head>
+
+<body >
+  <div class="cursor" id="cursor"></div>
+
+  <Header client:load />
+
+  <main class="container">
+
+    <h1 class="title">Creative Services</h1>
+    <p class="subtitle">
+      Animation, digital art & video editing —  
+      <strong>securely delivered via Fiverr only.</strong>
+    </p>
+
+    <a href={fiverrUrl} target="_blank" class="btn">Start on Fiverr →</a>
+
+    <div class="grid">
+      <div class="card">
+        <div class="icon">🎬</div>
+        <h3>2D Animation</h3>
+        <p class="desc">
+          Explainers, character motion, clean minimal style.
         </p>
+        <a href={fiverrUrl} target="_blank" class="mini">View on Fiverr</a>
       </div>
 
-      <div style="background: var(--bg-secondary); padding: 2rem; border-radius: var(--radius-xl); border: 1px solid var(--border-color); margin-bottom: 2rem;">
-        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem; color: var(--text-primary);">Why Fiverr?</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-          <div style="text-align: left;">
-            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">🔒 Secure Payments</div>
-            <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Buyer protection and dispute resolution built-in</p>
-          </div>
-          <div style="text-align: left;">
-            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">✅ Professional Standards</div>
-            <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Quality assurance and timely delivery guarantees</p>
-          </div>
-          <div style="text-align: left;">
-            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">💰 Transparent Pricing</div>
-            <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Clear pricing with no hidden fees or surprises</p>
-          </div>
-        </div>
-
-        <a href="https://www.fiverr.com/nksbro" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; background: var(--primary-color); color: var(--text-inverse); text-decoration: none; border-radius: var(--radius-lg); font-weight: 600; font-size: 1.1rem; transition: all var(--transition-fast);">
-          <span>View Services on Fiverr</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-      </div>
-
-      <div style="background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-        <p style="margin: 0; font-size: 0.9rem; color: var(--text-tertiary); font-style: italic;">
-          <strong>Note:</strong> This site does not handle direct payments or project transactions.
-          All services are managed through Fiverr's secure platform.
+      <div class="card">
+        <div class="icon">🎨</div>
+        <h3>Digital Art</h3>
+        <p class="desc">
+          Custom illustrations, thumbnails & posters.
         </p>
+        <a href={fiverrUrl} target="_blank" class="mini">View on Fiverr</a>
       </div>
-    </main>
-  </body>
+
+      <div class="card">
+        <div class="icon">✂️</div>
+        <h3>Video Editing</h3>
+        <p class="desc">
+          YouTube & short-form edits with clean pacing.
+        </p>
+        <a href={fiverrUrl} target="_blank" class="mini">View on Fiverr</a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How It Works</h2>
+      <div class="steps">
+        <div class="step">1️⃣ Choose a service on Fiverr</div>
+        <div class="step">2️⃣ Secure payment (buyer protected)</div>
+        <div class="step">3️⃣ Delivery + revisions</div>
+      </div>
+    </div>
+
+    <div class="notice">
+      🔒 All projects are handled through <strong>Fiverr</strong> for secure payments,
+      transparent pricing & buyer protection.
+    </div>
+
+    <a href={fiverrUrl} target="_blank" class="btn">Hire Me on Fiverr →</a>
+
+    <div class="footer">
+      * You’ll be redirected to fiverr.com/nksbro to place your order.
+    </div>
+
+  </main>
+
+  <script is:inline>
+    const cursor=document.getElementById("cursor");
+    window.addEventListener("mousemove",e=>{
+      cursor.style.left=e.clientX+"px";
+      cursor.style.top=e.clientY+"px";
+    });
+  </script>
+</body>
 </html>

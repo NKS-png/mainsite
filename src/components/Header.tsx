@@ -1,4 +1,4 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, onCleanup } from 'solid-js';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -12,10 +12,147 @@ interface User {
 
 export default function Header() {
   const [user, setUser] = createSignal<User | null>(null);
-  // Cart functionality removed - site now redirects to Fiverr for services
   const [isDarkTheme, setIsDarkTheme] = createSignal(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = createSignal(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
+
+  // --- STYLES (Embedded for Single File Portability) ---
+  const styles = `
+    :root {
+      --header-bg: rgba(255, 255, 255, 0.85);
+      --header-border: #e5e7eb;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --bg-secondary: #f3f4f6;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    [data-theme="dark"] {
+      --header-bg: rgba(17, 24, 39, 0.85);
+      --header-border: #374151;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --primary: #60a5fa;
+      --primary-hover: #3b82f6;
+      --bg-secondary: #1f2937;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      width: 100%;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--header-border);
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    .header-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-link { text-decoration: none; }
+    .brand-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0;
+      background: linear-gradient(to right, #0B79FF, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+    .theme-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 2.5rem; height: 2.5rem;
+      border-radius: 9999px; border: 1px solid transparent;
+      background-color: transparent; color: var(--text-muted);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .theme-toggle:hover { background-color: var(--bg-secondary); color: var(--text-main); }
+
+    .sun-icon, .moon-icon { width: 1.25rem; height: 1.25rem; display: none; }
+    :root[data-theme="dark"] .sun-icon { display: block; }
+    :root[data-theme="light"] .moon-icon { display: block; }
+
+    .user-menu-wrapper { position: relative; }
+    .user-menu {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--header-border);
+      border-radius: 9999px;
+      color: var(--text-main); font-weight: 500; font-size: 0.875rem;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .user-menu:hover { border-color: var(--primary); }
+
+    .welcome-text { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .dropdown-menu {
+      position: absolute; top: calc(100% + 0.5rem); right: 0; width: 14rem;
+      padding: 0.5rem; background-color: var(--header-bg);
+      border: 1px solid var(--header-border); border-radius: 0.75rem;
+      box-shadow: var(--shadow-lg);
+      opacity: 0; transform: translateY(-10px); pointer-events: none;
+      transition: all 0.2s ease-in-out;
+    }
+    .dropdown-menu.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    .dropdown-item {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+      color: var(--text-main); text-decoration: none;
+      border-radius: 0.5rem; font-size: 0.875rem; transition: background-color 0.2s;
+    }
+    .dropdown-item:hover { background-color: var(--bg-secondary); }
+    .dropdown-divider { height: 1px; background-color: var(--header-border); margin: 0.5rem 0; }
+    .logout-item { color: #ef4444; }
+
+    .auth-buttons { display: flex; gap: 0.75rem; }
+    .auth-btn {
+      padding: 0.5rem 1.25rem; border-radius: 0.5rem;
+      font-weight: 600; font-size: 0.875rem; text-decoration: none; transition: all 0.2s;
+    }
+    .login-btn { color: var(--text-main); }
+    .login-btn:hover { color: var(--primary); }
+    .signup-btn { background-color: var(--primary); color: white; }
+    .signup-btn:hover { background-color: var(--primary-hover); box-shadow: var(--shadow-sm); }
+
+    .mobile-menu-toggle {
+      display: none; background: transparent; border: none;
+      color: var(--text-main); cursor: pointer; padding: 0.5rem;
+    }
+    .mobile-auth-menu {
+      position: absolute; top: 100%; left: 0; width: 100%;
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--header-border);
+      padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      box-shadow: var(--shadow-lg); animation: slideDown 0.2s ease-out;
+    }
+    .mobile-auth-menu .auth-btn { text-align: center; width: 100%; }
+
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 768px) {
+      .auth-buttons { display: none; }
+      .mobile-menu-toggle { display: block; }
+      .header-content { padding: 0 1rem; }
+    }
+  `;
 
   onMount(async () => {
     if (!supabase) {
@@ -23,7 +160,7 @@ export default function Header() {
       return;
     }
 
-    // Load user from localStorage immediately for instant display
+    // Load user from localStorage immediately
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -43,45 +180,30 @@ export default function Header() {
     // Small delay to ensure cookies are loaded
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Check current session with better error handling
+    // Check current session
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.warn('Session retrieval error:', sessionError);
-        // Fallback: check for custom user_session cookie
         await checkCustomUserCookie();
       } else if (session?.user) {
-        console.log('Session found for user:', session.user.email);
         await loadUserProfile(session.user.id);
       } else {
-        console.log('No active session found, checking custom cookie');
-        // Fallback: check for custom user_session cookie
         await checkCustomUserCookie();
       }
     } catch (error) {
       console.warn('Error checking session:', error);
-      // Fallback: check for custom user_session cookie
       await checkCustomUserCookie();
     }
 
-    // Listen for auth changes with better error handling
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, !!session?.user, session?.user?.email);
+      console.log('Auth state changed:', event, !!session?.user);
       if (session?.user) {
         await loadUserProfile(session.user.id);
-      } else {
-        // Only clear user on explicit logout, not on session errors
-        if (event === 'SIGNED_OUT') {
-          console.log('User signed out explicitly');
-          setUser(null);
-        } else {
-          console.log('Session became unavailable, but not clearing user state');
-        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
       }
     });
-
-    // Load cart summary
-    await loadCartSummary();
 
     // Initialize theme
     const savedTheme = localStorage.getItem('theme');
@@ -90,15 +212,14 @@ export default function Header() {
     setIsDarkTheme(initialTheme === 'dark');
     document.documentElement.setAttribute('data-theme', initialTheme);
 
-    // Cleanup subscription on unmount
-    return () => {
+    // Cleanup
+    onCleanup(() => {
       subscription.unsubscribe();
-    };
+    });
   });
 
   const checkCustomUserCookie = async () => {
     try {
-      // Get the custom user_session cookie
       const cookies = document.cookie.split(';');
       const userSessionCookie = cookies.find(cookie => cookie.trim().startsWith('user_session='));
 

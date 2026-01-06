@@ -35,14 +35,29 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Get unique user IDs
     const userIds = [...new Set(comments.map(comment => comment.user_id))];
 
-    // Fetch profiles for these users
+    // Fetch profiles for these users (check if username column exists)
+    let profilesSelect = 'id, full_name, is_admin';
+    try {
+      // Try to include username if it exists
+      const testQuery = await supabase
+        .from('profiles')
+        .select('username')
+        .limit(1);
+      if (!testQuery.error) {
+        profilesSelect = 'id, full_name, username, is_admin';
+      }
+    } catch (e) {
+      // Username column doesn't exist, use basic query
+    }
+
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, full_name, is_admin')
+      .select(profilesSelect)
       .in('id', userIds);
 
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
+      // Continue with comments but without profile data
     }
 
     // Create a map of user_id to profile
@@ -53,11 +68,25 @@ export const GET: APIRoute = async ({ cookies }) => {
       });
     }
 
-    // Format comments with display names
+    // Format comments with proper display name logic
     const formattedComments = comments.map(comment => {
       const profile = profileMap.get(comment.user_id);
-      // Use full_name from Supabase profile, or 'Anonymous' as fallback
-      const displayName = profile?.full_name || 'Anonymous';
+
+      // Priority order for display name:
+      // 1. profiles.full_name (if exists, not empty, not null)
+      // 2. profiles.username (if available and not empty)
+      // 3. "User " + first 8 chars of user_id
+      let displayName = 'User'; // Default fallback
+
+      if (profile?.full_name && profile.full_name.trim() !== '') {
+        displayName = profile.full_name.trim();
+      } else if (profile?.username && profile.username.trim() !== '') {
+        displayName = profile.username.trim();
+      } else {
+        // Generate username from first 8 chars of user_id
+        displayName = `User${comment.user_id.slice(0, 8)}`;
+      }
+
       const isAdmin = profile?.is_admin || false;
 
       return {

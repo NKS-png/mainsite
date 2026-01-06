@@ -844,6 +844,29 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
+.logo-nks {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #DC2626; /* Red color */
+  margin: 0;
+  letter-spacing: -0.02em;
+  display: inline-block;
+}
+
+.brand-creates {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin: 0;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.02em;
+  display: inline-block;
+}
+
 .main-nav {
   display: flex;
   gap: var(--spacing-8);
@@ -1080,19 +1103,6 @@ a:hover {
   margin: var(--spacing-2) var(--spacing-4);
 }
 
-.theme-toggle {
-/* Auth Section */
-.auth-section {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-.auth-buttons {
-  display: flex;
-  gap: var(--spacing-2);
-}
-}
 
 .dropdown-item:hover {
   background: var(--bg-secondary);
@@ -3745,6 +3755,37 @@ a:hover {
   .cursor-follower {
     display: none;
   }
+}
+
+/* Unified Cursor System */
+.cursor-follower {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  background: var(--accent, #f1c40f);
+  border: 2px solid var(--text-main, #2c3e50);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  left: -10px;
+  top: -10px;
+  transition: width 0.2s, height 0.2s, opacity 0.2s;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+.cursor-follower.hovered {
+  width: 50px;
+  height: 50px;
+  opacity: 0.6;
+}
+@media (hover: none) {
+  .cursor-follower { display: none; }
+}
+
+/* Hide cursor on specific pages */
+.page-dashboard .cursor-follower,
+.page-services .cursor-follower {
+  display: none;
 }
 
 /* Enhanced hover effects for interactive elements */

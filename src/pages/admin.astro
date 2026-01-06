@@ -1,1577 +1,642 @@
 ---
-import { supabase } from '../lib/supabase';
-
+// AdminDashboard.astro
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 
-// Note: Server-side authentication checks in Astro require special setup.
-// For now, we'll rely on client-side auth and Supabase RLS policies.
-// In production, implement proper server-side auth with cookies.
+// Note: Ensure your /api/ routes are set up in Astro to handle these fetch requests.
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Admin Dashboard - NKScreates</title>
-		<style>
-			/* Premium Art-Focused UI - Design System & Styles */
-
-			/* CSS Custom Properties (Design Tokens) */
-			:root {
-				/* Colors */
-				--primary-color: #0B79FF;
-				--primary-hover: #0056CC;
-				--secondary-color: #6B7280;
-				--accent-color: #F59E0B;
-
-				/* Background Colors */
-				--bg-primary: #FFFFFF;
-				--bg-secondary: #F9FAFB;
-				--bg-tertiary: #F3F4F6;
-				--bg-dark: #111827;
-				--bg-overlay: rgba(0, 0, 0, 0.8);
-
-				/* Text Colors */
-				--text-primary: #111827;
-				--text-secondary: #6B7280;
-				--text-tertiary: #9CA3AF;
-				--text-inverse: #FFFFFF;
-				--text-accent: #0B79FF;
-
-				/* Border Colors */
-				--border-color: #E5E7EB;
-				--border-hover: #D1D5DB;
-
-				/* Shadows */
-				--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-				--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-				--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-				--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-				--shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-				/* Typography */
-				--font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-				--font-size-xs: 0.75rem;
-				--font-size-sm: 0.875rem;
-				--font-size-base: 1rem;
-				--font-size-lg: 1.125rem;
-				--font-size-xl: 1.25rem;
-				--font-size-2xl: 1.5rem;
-				--font-size-3xl: 1.875rem;
-				--font-size-4xl: 2.25rem;
-				--font-size-5xl: 3rem;
-				--font-size-6xl: 3.75rem;
-				--font-size-7xl: 4.5rem;
-
-				--font-weight-light: 300;
-				--font-weight-normal: 400;
-				--font-weight-medium: 500;
-				--font-weight-semibold: 600;
-				--font-weight-bold: 700;
-				--font-weight-extrabold: 800;
-
-				--line-height-tight: 1.25;
-				--line-height-snug: 1.375;
-				--line-height-normal: 1.5;
-				--line-height-relaxed: 1.625;
-				--line-height-loose: 2;
-
-				/* Spacing */
-				--spacing-1: 0.25rem;
-				--spacing-2: 0.5rem;
-				--spacing-3: 0.75rem;
-				--spacing-4: 1rem;
-				--spacing-5: 1.25rem;
-				--spacing-6: 1.5rem;
-				--spacing-8: 2rem;
-				--spacing-10: 2.5rem;
-				--spacing-12: 3rem;
-				--spacing-16: 4rem;
-				--spacing-20: 5rem;
-				--spacing-24: 6rem;
-
-				/* Border Radius */
-				--radius-sm: 0.125rem;
-				--radius-md: 0.375rem;
-				--radius-lg: 0.5rem;
-				--radius-xl: 0.75rem;
-				--radius-2xl: 1rem;
-				--radius-3xl: 1.5rem;
-				--radius-full: 9999px;
-
-				/* Animations */
-				--transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-				--transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-				--transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-				--easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-				--easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-				/* Z-Index */
-				--z-dropdown: 1000;
-				--z-sticky: 1020;
-				--z-fixed: 1030;
-				--z-modal-backdrop: 1040;
-				--z-modal: 1050;
-				--z-popover: 1060;
-				--z-tooltip: 1070;
-				--z-toast: 1080;
-			}
-
-			/* Dark Theme */
-			[data-theme="dark"] {
-				--bg-primary: #111827;
-				--bg-secondary: #1F2937;
-				--bg-tertiary: #374151;
-				--text-primary: #F9FAFB;
-				--text-secondary: #D1D5DB;
-				--text-tertiary: #9CA3AF;
-				--border-color: #374151;
-				--border-hover: #4B5563;
-			}
-
-			/* Base Styles */
-			* {
-				margin: 0;
-				padding: 0;
-				box-sizing: border-box;
-			}
-
-			html {
-				scroll-behavior: smooth;
-			}
-
-			body {
-				font-family: var(--font-family);
-				font-size: var(--font-size-base);
-				line-height: var(--line-height-normal);
-				color: var(--text-primary);
-				background-color: var(--bg-primary);
-				background-image: radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.03) 0%, transparent 50%);
-				background-size: 100px 100px;
-				overflow-x: hidden;
-				position: relative;
-				min-height: 100vh;
-			}
-
-			body::before {
-				content: '';
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.03) 0%, transparent 50%);
-				pointer-events: none;
-				z-index: -1;
-			}
-
-			/* Typography */
-			h1, h2, h3, h4, h5, h6 {
-				font-weight: var(--font-weight-bold);
-				line-height: var(--line-height-tight);
-				color: var(--text-primary);
-			}
-
-			h1 { font-size: var(--font-size-6xl); }
-			h2 { font-size: var(--font-size-5xl); }
-			h3 { font-size: var(--font-size-3xl); }
-			h4 { font-size: var(--font-size-2xl); }
-			h5 { font-size: var(--font-size-xl); }
-			h6 { font-size: var(--font-size-lg); }
-
-			p {
-				margin-bottom: var(--spacing-4);
-				color: var(--text-secondary);
-			}
-
-			/* Links */
-			a {
-				color: var(--primary-color);
-				text-decoration: none;
-				transition: color var(--transition-fast);
-			}
-
-			a:hover {
-				color: var(--primary-hover);
-			}
-
-			/* Buttons */
-			.btn {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				gap: var(--spacing-2);
-				padding: var(--spacing-3) var(--spacing-6);
-				font-size: var(--font-size-sm);
-				font-weight: var(--font-weight-medium);
-				border-radius: var(--radius-lg);
-				border: 1px solid transparent;
-				cursor: pointer;
-				transition: all var(--transition-fast);
-				text-decoration: none;
-			}
-
-			.btn:focus {
-				outline: 2px solid var(--primary-color);
-				outline-offset: 2px;
-			}
-
-			.btn:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
-
-			.btn-primary {
-				background-color: var(--primary-color);
-				color: var(--text-inverse);
-				border-color: var(--primary-color);
-			}
-
-			.btn-primary:hover:not(:disabled) {
-				background-color: var(--primary-hover);
-				border-color: var(--primary-hover);
-				transform: translateY(-1px);
-				box-shadow: var(--shadow-lg);
-			}
-
-			/* Simple Admin Layout */
-			.admin-container {
-				max-width: 1200px;
-				margin: 0 auto;
-				padding: var(--spacing-8) var(--spacing-6);
-			}
-
-			.admin-header {
-				text-align: center;
-				margin-bottom: var(--spacing-12);
-			}
-
-			.admin-title {
-				font-size: var(--font-size-4xl);
-				font-weight: var(--font-weight-extrabold);
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				-webkit-background-clip: text;
-				-webkit-text-fill-color: transparent;
-				background-clip: text;
-				margin-bottom: var(--spacing-4);
-			}
-
-			.admin-subtitle {
-				font-size: var(--font-size-lg);
-				color: var(--text-secondary);
-			}
-
-			/* Theme Toggle */
-			.theme-toggle {
-				position: fixed;
-				top: var(--spacing-6);
-				right: var(--spacing-6);
-				width: 44px;
-				height: 44px;
-				border-radius: var(--radius-full);
-				border: 1px solid var(--border-color);
-				background: var(--bg-primary);
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				transition: all var(--transition-fast);
-				z-index: var(--z-fixed);
-				box-shadow: var(--shadow-md);
-			}
-
-			.theme-toggle:hover {
-				border-color: var(--border-hover);
-				background: var(--bg-secondary);
-				transform: scale(1.05);
-			}
-
-			.theme-toggle svg {
-				width: 20px;
-				height: 20px;
-				transition: all var(--transition-normal);
-			}
-
-			.theme-toggle .moon-icon {
-				display: none;
-			}
-
-			[data-theme="dark"] .theme-toggle .sun-icon {
-				display: none;
-			}
-
-			[data-theme="dark"] .theme-toggle .moon-icon {
-				display: block;
-			}
-
-			/* Stats Grid */
-			.stats-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-				gap: var(--spacing-8);
-				margin-bottom: var(--spacing-12);
-			}
-
-			.stat-card {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-2xl);
-				padding: var(--spacing-8);
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-6);
-				transition: all var(--transition-normal);
-				box-shadow: var(--shadow-md);
-				position: relative;
-				overflow: hidden;
-			}
-
-			.stat-card::before {
-				content: '';
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: linear-gradient(135deg, rgba(11, 121, 255, 0.05), rgba(245, 158, 11, 0.05));
-				opacity: 0;
-				transition: opacity var(--transition-normal);
-				z-index: -1;
-			}
-
-			.stat-card:hover {
-				transform: translateY(-8px);
-				box-shadow: var(--shadow-xl);
-				border-color: var(--primary-color);
-			}
-
-			.stat-card:hover::before {
-				opacity: 1;
-			}
-
-			.stat-icon {
-				width: 64px;
-				height: 64px;
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				border-radius: var(--radius-xl);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				flex-shrink: 0;
-				color: var(--text-inverse);
-				box-shadow: var(--shadow-lg);
-			}
-
-			.stat-icon svg {
-				width: 32px;
-				height: 32px;
-			}
-
-			.stat-content {
-				flex: 1;
-			}
-
-			.stat-value {
-				font-size: var(--font-size-4xl);
-				font-weight: var(--font-weight-extrabold);
-				color: var(--text-primary);
-				margin-bottom: var(--spacing-2);
-				display: block;
-			}
-
-			.stat-label {
-				font-size: var(--font-size-lg);
-				color: var(--text-secondary);
-				font-weight: var(--font-weight-medium);
-			}
-
-			/* Content Sections */
-			.content-section {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-2xl);
-				padding: var(--spacing-8);
-				box-shadow: var(--shadow-md);
-				transition: all var(--transition-normal);
-				margin-bottom: var(--spacing-8);
-			}
-
-			.section-header {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				margin-bottom: var(--spacing-6);
-				flex-wrap: wrap;
-				gap: var(--spacing-4);
-			}
-
-			.section-title {
-				margin: 0;
-				font-size: var(--font-size-2xl);
-				font-weight: var(--font-weight-bold);
-				color: var(--text-primary);
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-3);
-			}
-
-			/* Upload Form */
-			.upload-form {
-				display: flex;
-				gap: var(--spacing-4);
-				align-items: center;
-				flex-wrap: wrap;
-			}
-
-			.upload-form select,
-			.upload-form input[type="file"] {
-				padding: var(--spacing-3) var(--spacing-4);
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-md);
-				color: var(--text-primary);
-				font-size: var(--font-size-sm);
-				transition: all var(--transition-normal);
-			}
-
-			.upload-form select:focus,
-			.upload-form input[type="file"]:focus {
-				outline: none;
-				border-color: var(--primary-color);
-				box-shadow: 0 0 0 3px rgba(11, 121, 255, 0.1);
-			}
-
-			.upload-btn {
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				color: white;
-				border: none;
-				padding: var(--spacing-3) var(--spacing-6);
-				border-radius: var(--radius-md);
-				font-weight: var(--font-weight-semibold);
-				cursor: pointer;
-				transition: all var(--transition-normal);
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-2);
-			}
-
-			.upload-btn:hover:not(:disabled) {
-				transform: translateY(-2px) scale(1.02);
-				box-shadow: var(--shadow-lg);
-			}
-
-			.upload-btn:disabled {
-				opacity: 0.6;
-				cursor: not-allowed;
-				transform: none;
-			}
-
-			/* Files Grid */
-			.files-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-				gap: var(--spacing-6);
-			}
-
-			/* List view for media files */
-			.files-grid.list-view {
-				gap: var(--spacing-2);
-			}
-
-			.files-grid.list-view .file-card {
-				display: flex;
-				align-items: center;
-				padding: var(--spacing-4);
-				border-radius: var(--radius-lg);
-				transition: all var(--transition-normal);
-			}
-
-			.files-grid.list-view .file-card:hover {
-				transform: translateY(-2px);
-				box-shadow: var(--shadow-lg);
-			}
-
-			.files-grid.list-view .file-preview-container {
-				width: 80px;
-				height: 60px;
-				flex-shrink: 0;
-				margin-right: var(--spacing-4);
-				border-radius: var(--radius-md);
-				overflow: hidden;
-			}
-
-			.files-grid.list-view .file-preview {
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-			}
-
-			.files-grid.list-view .file-info {
-				flex: 1;
-				padding: 0;
-			}
-
-			.files-grid.list-view .file-name {
-				font-size: var(--font-size-base);
-				margin-bottom: var(--spacing-1);
-			}
-
-			.files-grid.list-view .file-meta {
-				display: flex;
-				gap: var(--spacing-4);
-				font-size: var(--font-size-sm);
-			}
-
-			.files-grid.list-view .file-actions {
-				position: static;
-				opacity: 1;
-				margin-left: var(--spacing-4);
-				flex-shrink: 0;
-			}
-
-			.files-grid.list-view .file-actions .action-btn {
-				width: 32px;
-				height: 32px;
-				padding: 0;
-			}
-
-			.file-card {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-lg);
-				overflow: hidden;
-				transition: all var(--transition-normal);
-				cursor: pointer;
-				position: relative;
-				box-shadow: var(--shadow-md);
-			}
-
-			.file-card:hover {
-				transform: translateY(-8px) scale(1.02);
-				box-shadow: var(--shadow-xl);
-				border-color: var(--primary-color);
-			}
-
-			.file-preview-container {
-				position: relative;
-				height: 180px;
-				background: var(--bg-secondary);
-				overflow: hidden;
-				border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-			}
-
-			.file-preview {
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-				transition: transform var(--transition-slow);
-			}
-
-			.file-card:hover .file-preview {
-				transform: scale(1.05);
-			}
-
-			.file-info {
-				padding: var(--spacing-4);
-			}
-
-			.file-name {
-				font-size: var(--font-size-base);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-				margin-bottom: var(--spacing-2);
-				line-height: 1.4;
-			}
-
-			.file-meta {
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-1);
-				font-size: var(--font-size-xs);
-				color: var(--text-tertiary);
-			}
-
-			.file-bucket {
-				background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-				color: white;
-				padding: var(--spacing-1) var(--spacing-2);
-				border-radius: 12px;
-				font-size: 10px;
-				font-weight: var(--font-weight-semibold);
-				text-transform: uppercase;
-				display: inline-block;
-				margin-bottom: var(--spacing-1);
-			}
-
-			/* Orders Management */
-			.orders-list {
-				display: flex;
-				flex-direction: column;
-				gap: var(--spacing-6);
-			}
-
-			.order-card {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-xl);
-				padding: var(--spacing-6);
-				transition: all var(--transition-normal);
-				box-shadow: var(--shadow-md);
-				position: relative;
-				overflow: hidden;
-			}
-
-			.order-card:hover {
-				transform: translateY(-4px);
-				box-shadow: var(--shadow-lg);
-				border-color: var(--primary-color);
-			}
-
-			.order-header {
-				display: flex;
-				align-items: flex-start;
-				justify-content: space-between;
-				margin-bottom: var(--spacing-4);
-			}
-
-			.order-info h4 {
-				margin: 0 0 var(--spacing-1) 0;
-				font-size: var(--font-size-lg);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-			}
-
-			.order-meta {
-				font-size: var(--font-size-xs);
-				color: var(--text-secondary);
-				margin-bottom: var(--spacing-2);
-			}
-
-			.order-status {
-				padding: var(--spacing-1) var(--spacing-3);
-				border-radius: 20px;
-				font-size: var(--font-size-xs);
-				font-weight: var(--font-weight-semibold);
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-
-			.status-pending {
-				background: linear-gradient(135deg, #f59e0b, #d97706);
-				color: white;
-			}
-
-			.status-approved {
-				background: linear-gradient(135deg, #10b981, #059669);
-				color: white;
-			}
-
-			.status-rejected {
-				background: linear-gradient(135deg, #ef4444, #dc2626);
-				color: white;
-			}
-
-			.order-description {
-				color: var(--text-secondary);
-				margin-bottom: var(--spacing-4);
-				line-height: 1.6;
-			}
-
-			.order-actions {
-				display: flex;
-				gap: var(--spacing-3);
-				flex-wrap: wrap;
-			}
-
-			.action-btn {
-				padding: var(--spacing-2) var(--spacing-4);
-				border: none;
-				border-radius: var(--radius-md);
-				font-size: var(--font-size-sm);
-				font-weight: var(--font-weight-semibold);
-				cursor: pointer;
-				transition: all var(--transition-normal);
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-2);
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-
-			.approve-btn {
-				background: linear-gradient(135deg, #10b981, #059669);
-				color: white;
-			}
-
-			.approve-btn:hover {
-				transform: translateY(-2px) scale(1.02);
-				box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-			}
-
-			.reject-btn {
-				background: linear-gradient(135deg, #ef4444, #dc2626);
-				color: white;
-			}
-
-			.reject-btn:hover {
-				transform: translateY(-2px) scale(1.02);
-				box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
-			}
-
-			.preview-btn {
-				background: var(--bg-secondary);
-				color: var(--text-primary);
-				border: 1px solid var(--border-color);
-			}
-
-			.preview-btn:hover {
-				background: var(--bg-tertiary);
-				transform: translateY(-1px);
-			}
-
-			/* Order Preview Modal */
-			.order-preview-modal {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				z-index: 2000;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				opacity: 0;
-				visibility: hidden;
-				transition: all var(--transition-normal);
-			}
-
-			.order-preview-modal.show {
-				opacity: 1;
-				visibility: visible;
-			}
-
-			.order-preview-overlay {
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: var(--bg-overlay);
-				backdrop-filter: blur(8px);
-			}
-
-			.order-preview-container {
-				position: relative;
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-2xl);
-				max-width: 800px;
-				max-height: 90vh;
-				width: 90%;
-				overflow: hidden;
-				box-shadow: var(--shadow-2xl);
-				z-index: 2001;
-				display: flex;
-				flex-direction: column;
-			}
-
-			.order-preview-header {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				padding: var(--spacing-6);
-				border-bottom: 1px solid var(--border-color);
-				background: var(--bg-secondary);
-			}
-
-			.order-preview-header h3 {
-				margin: 0;
-				font-size: var(--font-size-xl);
-				font-weight: var(--font-weight-bold);
-				color: var(--text-primary);
-			}
-
-			.order-preview-close {
-				background: none;
-				border: none;
-				font-size: 2rem;
-				color: var(--text-secondary);
-				cursor: pointer;
-				padding: 0;
-				width: 40px;
-				height: 40px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				border-radius: var(--radius-md);
-				transition: all var(--transition-normal);
-			}
-
-			.order-preview-close:hover {
-				background: var(--bg-tertiary);
-				color: var(--text-primary);
-			}
-
-			.order-preview-content {
-				flex: 1;
-				overflow-y: auto;
-				padding: var(--spacing-6);
-			}
-
-			.order-preview-details {
-				display: grid;
-				gap: var(--spacing-6);
-			}
-
-			.order-detail-section {
-				background: var(--bg-secondary);
-				padding: var(--spacing-4);
-				border-radius: var(--radius-lg);
-			}
-
-			.order-detail-section h4 {
-				margin: 0 0 var(--spacing-3) 0;
-				font-size: var(--font-size-lg);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-			}
-
-			.order-media-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-				gap: var(--spacing-4);
-			}
-
-			.order-media-item {
-				background: var(--bg-primary);
-				border: 1px solid var(--border-color);
-				border-radius: var(--radius-md);
-				overflow: hidden;
-				position: relative;
-			}
-
-			.order-media-item img,
-			.order-media-item video {
-				width: 100%;
-				height: 150px;
-				object-fit: cover;
-			}
-
-			/* File Actions */
-			.file-actions {
-				position: absolute;
-				bottom: var(--spacing-3);
-				right: var(--spacing-3);
-				display: flex;
-				gap: var(--spacing-2);
-				opacity: 0;
-				transition: opacity var(--transition-normal);
-				z-index: 3;
-			}
-
-			.file-card:hover .file-actions {
-				opacity: 1;
-			}
-
-			.file-actions .action-btn {
-				width: 36px;
-				height: 36px;
-				padding: 0;
-				border-radius: 50%;
-				background: rgba(0, 0, 0, 0.8);
-				border: 1px solid rgba(255, 255, 255, 0.2);
-				backdrop-filter: blur(10px);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-
-			.file-actions .action-btn:hover {
-				transform: scale(1.1);
-				background: rgba(0, 0, 0, 0.9);
-			}
-
-			.file-actions .action-btn svg {
-				width: 16px;
-				height: 16px;
-				color: white;
-			}
-
-			/* Empty State */
-			.empty-state {
-				text-align: center;
-				padding: 4rem var(--spacing-6);
-				color: var(--text-secondary);
-			}
-
-			.empty-state svg {
-				width: 64px;
-				height: 64px;
-				margin: 0 auto var(--spacing-4);
-				opacity: 0.5;
-			}
-
-			.empty-state h3 {
-				margin: 0 0 var(--spacing-2) 0;
-				font-size: var(--font-size-lg);
-				font-weight: var(--font-weight-semibold);
-				color: var(--text-primary);
-			}
-
-			.empty-state p {
-				margin: 0;
-				font-size: var(--font-size-sm);
-			}
-
-			/* Mobile Responsive */
-			@media (max-width: 768px) {
-				.admin-container {
-					padding: var(--spacing-4);
-				}
-
-				.stats-grid {
-					grid-template-columns: 1fr;
-				}
-
-				.files-grid {
-					grid-template-columns: 1fr;
-				}
-
-				.upload-form {
-					flex-direction: column;
-					align-items: stretch;
-				}
-
-				.section-header {
-					flex-direction: column;
-					align-items: flex-start;
-				}
-
-				.admin-title {
-					font-size: var(--font-size-3xl);
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<!-- Theme Toggle -->
-		<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-			<svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="12" cy="12" r="5"/>
-				<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-			</svg>
-			<svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-			</svg>
-		</button>
-
-		<div class="admin-container">
-			<!-- Navigation Header -->
-			<header class="admin-header">
-				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-					<div>
-						<h1 class="admin-title">Admin Dashboard</h1>
-						<p class="admin-subtitle">Manage your portfolio and orders</p>
-					</div>
-					<div>
-						<a href="/" class="btn btn-primary">
-							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;">
-								<path d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							</svg>
-							Home Page
-						</a>
-					</div>
-				</div>
-			</header>
-
-			<!-- Stats -->
-			<div class="stats-grid">
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="pendingCount">0</div>
-						<div class="stat-label">Pending Approvals</div>
-					</div>
-				</div>
-
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="totalOrders">0</div>
-						<div class="stat-label">Total Orders</div>
-					</div>
-				</div>
-
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="portfolioItems">0</div>
-						<div class="stat-label">Portfolio Items</div>
-					</div>
-				</div>
-
-				<div class="stat-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" stroke="currentColor" stroke-width="2"/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<div class="stat-value" id="revenue">$0</div>
-						<div class="stat-label">Revenue</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Orders Management -->
-			<div class="content-section">
-				<div class="section-header">
-					<h2 class="section-title">Order Management</h2>
-				</div>
-				<div class="orders-list" id="ordersList">
-					<!-- Orders will be populated by JavaScript -->
-				</div>
-			</div>
-
-			<!-- Portfolio Management -->
-			<div class="content-section">
-				<div class="section-header">
-					<h2 class="section-title">Portfolio Management</h2>
-					<div class="upload-form">
-						<select id="bucketSelect">
-							<option value="animation">Animation</option>
-							<option value="artwork">Artwork</option>
-							<option value="video_editing">Video Editing</option>
-						</select>
-						<input type="file" id="fileInput" multiple accept="image/*,video/*">
-						<button class="upload-btn" id="uploadBtn">
-							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							</svg>
-							Upload Files
-						</button>
-					</div>
-				</div>
-				<div class="files-grid list-view" id="filesGrid">
-					<!-- Portfolio files will be populated by JavaScript -->
-				</div>
-			</div>
-
-			<!-- Media Management -->
-			<div class="content-section">
-				<div class="section-header">
-					<h2 class="section-title">
-						<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;">
-							<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
-						</svg>
-						Uploaded Media Management
-					</h2>
-				</div>
-				<div class="files-grid list-view" id="mediaGrid">
-					<!-- Media files will be populated by JavaScript -->
-				</div>
-			</div>
-
-			<!-- Order Preview Modal -->
-			<div class="order-preview-modal" id="orderPreviewModal">
-				<div class="order-preview-overlay"></div>
-				<div class="order-preview-container">
-					<div class="order-preview-header">
-						<h3 id="orderPreviewTitle">Order Details</h3>
-						<button class="order-preview-close" id="orderPreviewClose">×</button>
-					</div>
-					<div class="order-preview-content">
-						<div class="order-preview-details" id="orderPreviewDetails">
-							<!-- Order details will be populated by JavaScript -->
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<script is:inline>
-			// Make Supabase URL available to JavaScript
-			window.SUPABASE_URL = 'https://avmiweumvpveykxtamfm.supabase.co';
-			
-			// Simple Admin Dashboard JavaScript
-			document.addEventListener('DOMContentLoaded', function() {
-				// Theme Toggle Functionality
-				const themeToggle = document.getElementById('themeToggle');
-				const html = document.documentElement;
-
-				// Load saved theme
-				const savedTheme = localStorage.getItem('theme') || 'light';
-				if (savedTheme === 'dark') {
-					html.setAttribute('data-theme', 'dark');
-				}
-
-				// Theme toggle event
-				if (themeToggle) {
-					themeToggle.addEventListener('click', function() {
-						const currentTheme = html.getAttribute('data-theme');
-						const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-						html.setAttribute('data-theme', newTheme);
-						localStorage.setItem('theme', newTheme);
-					});
-				}
-
-				// File Upload Functionality
-				const uploadBtn = document.getElementById('uploadBtn');
-				const fileInput = document.getElementById('fileInput');
-				const bucketSelect = document.getElementById('bucketSelect');
-
-				if (uploadBtn) {
-					uploadBtn.addEventListener('click', async function() {
-						const files = fileInput && (fileInput).files;
-						const bucket = bucketSelect ? bucketSelect.value : 'animation';
-
-						if (!files || files.length === 0) {
-							alert('Please select files to upload');
-							return;
-						}
-
-						uploadBtn.disabled = true;
-						uploadBtn.innerHTML = 'Uploading...';
-
-						try {
-							for (let i = 0; i < files.length; i++) {
-								const file = files[i];
-								const formData = new FormData();
-								formData.append('files', file);
-								formData.append('bucket', bucket);
-
-								const response = await fetch('/api/uploads', {
-									method: 'POST',
-									body: formData
-								});
-
-								if (!response.ok) {
-									throw new Error(`Upload failed: ${response.statusText}`);
-								}
-							}
-
-							alert('Files uploaded successfully!');
-							if (fileInput) (fileInput).value = '';
-							loadPortfolioFiles();
-
-						} catch (error) {
-							console.error('Upload error:', error);
-							alert('Upload failed. Please try again.');
-						} finally {
-							uploadBtn.disabled = false;
-							uploadBtn.innerHTML = `
-								<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-								</svg>
-								Upload Files
-							`;
-						}
-					});
-				}
-
-				// Load portfolio files
-				async function loadPortfolioFiles() {
-					try {
-						const response = await fetch('/api/uploads');
-						const files = await response.json();
-
-						const filesGrid = document.getElementById('filesGrid');
-						if (!filesGrid) return;
-						filesGrid.innerHTML = '';
-
-						if (!files || files.length === 0) {
-							filesGrid.innerHTML = `
-								<div class="empty-state">
-									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path d="M9 13h6m-3-3v6m5.657-10.657a2 2 0 00-2.828 0l-8.485 8.485a2 2 0 000 2.828l8.485 8.485a2 2 0 002.828 0l8.485-8.485a2 2 0 000-2.828l-8.485-8.485z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-									</svg>
-									<p>No portfolio files yet</p>
-								</div>
-							`;
-							return;
-						}
-
-						files.forEach((file) => {
-							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/${file.bucket}/${encodeURIComponent(file.path)}`;
-							const fileCard = document.createElement('div');
-							fileCard.className = 'file-card';
-
-							let mediaPreview = '';
-							if (file.mime && file.mime.startsWith('video/')) {
-								mediaPreview = `<video controls><source src="${fileUrl}" type="${file.mime}"></video>`;
-							} else if (file.mime && file.mime.startsWith('image/')) {
-								mediaPreview = `<img src="${fileUrl}" alt="${file.filename}" />`;
-							} else {
-								mediaPreview = `<div class="file-icon">📄</div>`;
-							}
-
-							const deleteBtn = document.createElement('button');
-							deleteBtn.className = 'delete-btn';
-							deleteBtn.innerHTML = `
-								<svg viewBox="0 0 24 24" fill="none">
-									<path d="M4 4l16 16M4 20l16-16" stroke="currentColor" stroke-width="2"/>
-								</svg>
-							`;
-
-							deleteBtn.addEventListener('click', (e) => {
-								deleteMediaFile(file.id, file.filename);
-							});
-
-							fileCard.innerHTML = `${mediaPreview}<div class="file-info"><p>${file.filename}</p></div>`;
-							fileCard.appendChild(deleteBtn);
-							filesGrid.appendChild(fileCard);
-						});
-					} catch (error) {
-						console.error('Error loading files:', error);
-					}
-				}
-
-				// Load media files
-				async function loadMediaFiles() {
-					try {
-						const response = await fetch('/api/uploads');
-						const files = await response.json();
-						const mediaGrid = document.getElementById('mediaGrid');
-						if (!mediaGrid) return;
-
-						mediaGrid.innerHTML = '';
-
-						if (!files || files.length === 0) {
-							mediaGrid.innerHTML = `<div class="empty-state"><p>No media files</p></div>`;
-							return;
-						}
-
-						files.forEach((file) => {
-							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/${file.bucket}/${encodeURIComponent(file.path)}`;
-							const mediaItem = document.createElement('div');
-							mediaItem.className = 'media-item';
-
-							let mediaPreview = '';
-							if (file.mime && file.mime.startsWith('video/')) {
-								mediaPreview = `<video controls><source src="${fileUrl}" type="${file.mime}"></video>`;
-							} else if (file.mime && file.mime.startsWith('image/')) {
-								mediaPreview = `<img src="${fileUrl}" alt="${file.filename}" />`;
-							} else {
-								mediaPreview = `<div class="file-icon">📄</div>`;
-							}
-
-							const deleteBtn = document.createElement('button');
-							deleteBtn.className = 'delete-btn';
-							deleteBtn.innerHTML = `
-								<svg viewBox="0 0 24 24" fill="none">
-									<path d="M4 4l16 16M4 20l16-16" stroke="currentColor" stroke-width="2"/>
-								</svg>
-							`;
-
-							deleteBtn.addEventListener('click', (e) => {
-								deleteMediaFile(file.id, file.filename);
-							});
-
-							mediaItem.innerHTML = `${mediaPreview}<div class="media-info"><p>${file.filename}</p></div>`;
-							mediaItem.appendChild(deleteBtn);
-							mediaGrid.appendChild(mediaItem);
-						});
-					} catch (error) {
-						console.error('Error loading media:', error);
-					}
-				}
-
-				// Delete media file
-				async function deleteMediaFile(fileId, filename) {
-					if (!confirm(`Delete ${filename}?`)) return;
-
-					try {
-						const response = await fetch(`/api/uploads/${fileId}`, { method: 'DELETE' });
-						if (response.ok) {
-							showNotification('File deleted successfully', 'success');
-							loadPortfolioFiles();
-							loadMediaFiles();
-						} else {
-							showNotification('Failed to delete file', 'error');
-						}
-					} catch (error) {
-						console.error('Error:', error);
-						showNotification('Error deleting file', 'error');
-					}
-				}
-
-				// Load orders
-				async function loadOrders() {
-					try {
-						const response = await fetch('/api/admin/orders');
-						const orders = await response.json();
-						const ordersList = document.getElementById('ordersList');
-						if (!ordersList) return;
-
-						ordersList.innerHTML = '';
-
-						if (!orders || orders.length === 0) {
-							ordersList.innerHTML = `<div class="empty-state"><p>No orders</p></div>`;
-							return;
-						}
-
-						orders.forEach((order) => {
-							const orderCard = document.createElement('div');
-							orderCard.className = `order-card order-${order.status}`;
-
-							const approveBtn = document.createElement('button');
-							approveBtn.className = 'btn-approve';
-							approveBtn.textContent = 'Approve';
-							approveBtn.addEventListener('click', () => approveOrder(order.id));
-
-							const rejectBtn = document.createElement('button');
-							rejectBtn.className = 'btn-reject';
-							rejectBtn.textContent = 'Reject';
-							rejectBtn.addEventListener('click', () => rejectOrder(order.id));
-
-							const previewBtn = document.createElement('button');
-							previewBtn.className = 'btn-preview';
-							previewBtn.textContent = 'View';
-							previewBtn.addEventListener('click', () => showOrderPreview(order));
-
-							orderCard.innerHTML = `
-								<h3>${order.service_title || 'Service Request'}</h3>
-								<p>${order.description || 'No description'}</p>
-								<p>Status: <span>${order.status}</span></p>
-							`;
-							orderCard.appendChild(approveBtn);
-							orderCard.appendChild(rejectBtn);
-							orderCard.appendChild(previewBtn);
-							ordersList.appendChild(orderCard);
-						});
-					} catch (error) {
-						console.error('Error loading orders:', error);
-					}
-				}
-
-				// Show order preview
-				function showOrderPreview(order) {
-					const modal = document.getElementById('orderPreviewModal');
-					const title = document.getElementById('orderPreviewTitle');
-					const details = document.getElementById('orderPreviewDetails');
-
-					if (!modal || !title || !details) return;
-
-					title.textContent = `Order #${order.id} - ${order.service_title || 'Service Request'}`;
-					details.innerHTML = `
-						<p><strong>Description:</strong> ${order.description || 'N/A'}</p>
-						<p><strong>Status:</strong> ${order.status}</p>
-						<p><strong>Budget:</strong> $${order.budget || 'Not specified'}</p>
-					`;
-					modal.classList.add('show');
-
-					loadOrderMedia(order.id);
-				}
-
-				// Load order media
-				async function loadOrderMedia(orderId) {
-					try {
-						const mediaGrid = document.getElementById('orderMediaGrid');
-						if (!mediaGrid) return;
-
-						mediaGrid.innerHTML = '';
-
-						const response = await fetch(`/api/orders/${orderId}/files`);
-						const files = await response.json();
-
-						if (!files || files.length === 0) {
-							mediaGrid.innerHTML = `<div class="empty-state"><p>No files attached</p></div>`;
-							return;
-						}
-
-						files.forEach((file) => {
-							const fileUrl = `${window.SUPABASE_URL}/storage/v1/object/public/orders/${encodeURIComponent(file.path)}`;
-							const mediaItem = document.createElement('div');
-							mediaItem.className = 'media-item';
-
-							let mediaPreview = '';
-							if (file.mime && file.mime.startsWith('video/')) {
-								mediaPreview = `<video controls><source src="${fileUrl}" type="${file.mime}"></video>`;
-							} else if (file.mime && file.mime.startsWith('image/')) {
-								mediaPreview = `<img src="${fileUrl}" alt="${file.filename}" />`;
-							} else {
-								mediaPreview = `<div class="file-icon">📄</div>`;
-							}
-
-							const deleteBtn = document.createElement('button');
-							deleteBtn.className = 'delete-btn';
-							deleteBtn.innerHTML = `
-								<svg viewBox="0 0 24 24" fill="none">
-									<path d="M4 4l16 16M4 20l16-16" stroke="currentColor" stroke-width="2"/>
-								</svg>
-							`;
-
-							deleteBtn.addEventListener('click', (e) => {
-								deleteOrderFile(orderId, file.id, file.filename);
-							});
-
-							mediaItem.innerHTML = `${mediaPreview}<div class="media-info"><p>${file.filename}</p></div>`;
-							mediaItem.appendChild(deleteBtn);
-							mediaGrid.appendChild(mediaItem);
-						});
-					} catch (error) {
-						console.error('Error:', error);
-					}
-				}
-
-				// Approve order
-				async function approveOrder(orderId) {
-					try {
-						const response = await fetch(`/api/admin/orders/${orderId}/approve`, { method: 'POST' });
-						if (response.ok) {
-							showNotification('Order approved', 'success');
-							loadOrders();
-						} else {
-							showNotification('Failed to approve order', 'error');
-						}
-					} catch (error) {
-						console.error('Error:', error);
-						showNotification('Error approving order', 'error');
-					}
-				}
-
-				// Reject order
-				async function rejectOrder(orderId) {
-					try {
-						const response = await fetch(`/api/admin/orders/${orderId}/reject`, { method: 'POST' });
-						if (response.ok) {
-							showNotification('Order rejected', 'success');
-							loadOrders();
-						} else {
-							showNotification('Failed to reject order', 'error');
-						}
-					} catch (error) {
-						console.error('Error:', error);
-						showNotification('Error rejecting order', 'error');
-					}
-				}
-
-				// Delete order file
-				async function deleteOrderFile(orderId, fileId, filename) {
-					if (!confirm(`Delete ${filename}?`)) return;
-
-					try {
-						const response = await fetch(`/api/orders/${orderId}/files/${fileId}`, { method: 'DELETE' });
-						if (response.ok) {
-							showNotification('File deleted', 'success');
-							loadOrderMedia(orderId);
-						} else {
-							showNotification('Failed to delete file', 'error');
-						}
-					} catch (error) {
-						console.error('Error:', error);
-						showNotification('Error deleting file', 'error');
-					}
-				}
-
-				// Update stats
-				async function updateStats() {
-					try {
-						const response = await fetch('/api/orders');
-						const orders = await response.json();
-
-						const totalOrders = document.getElementById('totalOrders');
-						const pendingOrders = document.getElementById('pendingOrders');
-						const approvedOrders = document.getElementById('approvedOrders');
-
-						if (totalOrders) totalOrders.textContent = orders ? orders.length : '0';
-						if (pendingOrders) pendingOrders.textContent = orders ? orders.filter((o) => o.status === 'pending').length : '0';
-						if (approvedOrders) approvedOrders.textContent = orders ? orders.filter((o) => o.status === 'approved').length : '0';
-					} catch (error) {
-						console.error('Error updating stats:', error);
-					}
-				}
-
-				// Close modal
-				const closeBtn = document.getElementById('orderPreviewClose');
-				const modal = document.getElementById('orderPreviewModal');
-				if (closeBtn) {
-					closeBtn.addEventListener('click', () => {
-						if (modal) modal.classList.remove('show');
-					});
-				}
-
-				if (modal) {
-					modal.addEventListener('click', (e) => {
-						if (e.target === modal) {
-							modal.classList.remove('show');
-						}
-					});
-				}
-
-				function showNotification(message, type) {
-					// Create notification element
-					const notification = document.createElement('div');
-					notification.className = `notification notification-${type}`;
-					notification.style.cssText = `
-						position: fixed;
-						top: 20px;
-						right: 20px;
-						padding: 12px 16px;
-						border-radius: 8px;
-						color: white;
-						font-weight: 500;
-						z-index: 10000;
-						max-width: 400px;
-						box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-						transform: translateX(100%);
-						transition: transform 0.3s ease;
-					`;
-
-					// Set background color based on type
-					if (type === 'success') {
-						notification.style.backgroundColor = '#10b981';
-					} else if (type === 'error') {
-						notification.style.backgroundColor = '#ef4444';
-					} else {
-						notification.style.backgroundColor = '#3b82f6';
-					}
-
-					notification.textContent = message;
-					document.body.appendChild(notification);
-
-					// Animate in
-					setTimeout(() => {
-						notification.style.transform = 'translateX(0)';
-					}, 100);
-
-					// Remove after 5 seconds
-					setTimeout(() => {
-						notification.style.transform = 'translateX(100%)';
-						setTimeout(() => {
-							document.body.removeChild(notification);
-						}, 300);
-					}, 5000);
-				}
-
-				// Initialize
-				loadPortfolioFiles();
-				loadMediaFiles();
-				loadOrders();
-				updateStats();
-
-				// Refresh data every 30 seconds
-				setInterval(() => {
-					updateStats();
-					loadOrders();
-					loadMediaFiles();
-				}, 30000);
-			});
-		</script>
-</body>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Admin Dashboard - NKScreates</title>
+        <style is:global>
+            /* --- DESIGN SYSTEM --- */
+            :root {
+                --primary: #0B79FF;
+                --primary-hover: #0056CC;
+                --accent: #F59E0B;
+                
+                --bg-body: #F9FAFB;
+                --bg-card: #FFFFFF;
+                --bg-hover: #F3F4F6;
+                
+                --text-main: #111827;
+                --text-muted: #6B7280;
+                
+                --border: #E5E7EB;
+                --radius: 12px;
+                --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+
+            [data-theme="dark"] {
+                --bg-body: #111827;
+                --bg-card: #1F2937;
+                --bg-hover: #374151;
+                --text-main: #F9FAFB;
+                --text-muted: #9CA3AF;
+                --border: #374151;
+            }
+
+            /* --- RESET & BASE --- */
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            
+            body {
+                font-family: 'Inter', system-ui, sans-serif;
+                background-color: var(--bg-body);
+                color: var(--text-main);
+                transition: background 0.3s, color 0.3s;
+                min-height: 100vh;
+            }
+
+            /* --- LAYOUT UTILS --- */
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 3rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .header-content h1 {
+                font-size: 1.875rem;
+                font-weight: 800;
+                background: linear-gradient(135deg, var(--primary), var(--accent));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                transition: transform 0.1s;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                text-decoration: none;
+                font-size: 0.875rem;
+            }
+
+            .btn:active { transform: scale(0.98); }
+            
+            .btn-primary { background: var(--primary); color: white; }
+            .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+            .btn-danger { background: #EF4444; color: white; }
+            .btn-success { background: #10B981; color: white; }
+
+            /* --- STATS GRID --- */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 1.5rem;
+                margin-bottom: 3rem;
+            }
+
+            .stat-card {
+                background: var(--bg-card);
+                padding: 1.5rem;
+                border-radius: var(--radius);
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow);
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .stat-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 10px;
+                background: rgba(11, 121, 255, 0.1);
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .stat-info h3 { font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 0.25rem; }
+            .stat-info p { color: var(--text-muted); font-size: 0.875rem; }
+
+            /* --- SECTIONS --- */
+            .section {
+                background: var(--bg-card);
+                border-radius: var(--radius);
+                border: 1px solid var(--border);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+            }
+
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            /* --- UPLOAD ZONE --- */
+            .upload-zone {
+                border: 2px dashed var(--border);
+                border-radius: var(--radius);
+                padding: 2rem;
+                text-align: center;
+                margin-bottom: 2rem;
+                transition: border-color 0.2s;
+                background: var(--bg-hover);
+            }
+
+            .upload-zone:hover { border-color: var(--primary); }
+
+            .upload-controls {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                margin-top: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .form-select {
+                padding: 0.5rem;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                background: var(--bg-card);
+                color: var(--text-main);
+            }
+
+            /* --- GALLERY GRID --- */
+            .gallery-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .file-card {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                overflow: hidden;
+                position: relative;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .file-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+
+            .file-preview {
+                height: 150px;
+                width: 100%;
+                background: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .file-preview img, .file-preview video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .file-info {
+                padding: 0.75rem;
+            }
+
+            .file-name {
+                font-size: 0.875rem;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 0.25rem;
+            }
+
+            .file-tag {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                background: var(--bg-hover);
+                padding: 2px 6px;
+                border-radius: 4px;
+                color: var(--text-muted);
+            }
+
+            .delete-overlay {
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .file-card:hover .delete-overlay { opacity: 1; }
+
+            /* --- ORDERS LIST --- */
+            .order-list { display: flex; flex-direction: column; gap: 1rem; }
+
+            .order-item {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1.25rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                gap: 1rem;
+            }
+
+            .order-status {
+                padding: 0.25rem 0.75rem;
+                border-radius: 99px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+            
+            .status-pending { background: #FEF3C7; color: #D97706; }
+            .status-approved { background: #D1FAE5; color: #059669; }
+            .status-rejected { background: #FEE2E2; color: #DC2626; }
+
+            /* --- THEME TOGGLE --- */
+            .theme-toggle {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                width: 3rem;
+                height: 3rem;
+                border-radius: 50%;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                box-shadow: var(--shadow);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+            }
+
+            /* --- MODAL --- */
+            .modal-backdrop {
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5);
+                backdrop-filter: blur(4px);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s;
+            }
+
+            .modal-backdrop.show { opacity: 1; pointer-events: auto; }
+
+            .modal-content {
+                background: var(--bg-card);
+                width: 90%;
+                max-width: 600px;
+                border-radius: var(--radius);
+                padding: 2rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            /* --- NOTIFICATION --- */
+            .notification {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                padding: 1rem;
+                border-radius: 8px;
+                color: white;
+                transform: translateY(-150%);
+                transition: transform 0.3s;
+                z-index: 3000;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .notif-success { background: #10B981; }
+            .notif-error { background: #EF4444; }
+            .notification.show { transform: translateY(0); }
+
+            /* Mobile tweaks */
+            @media (max-width: 768px) {
+                .container { padding: 1rem; }
+                .header { flex-direction: column; align-items: flex-start; }
+                .upload-controls { flex-direction: column; width: 100%; }
+                .upload-controls button, .upload-controls select { width: 100%; }
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="container">
+            <header class="header">
+                <div class="header-content">
+                    <h1>Admin Dashboard</h1>
+                    <p style="color: var(--text-muted);">Welcome back, Nks.</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M9 21V9h6v12"/></svg>
+                        View Site
+                    </a>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="pendingCount">0</h3>
+                        <p>Pending Orders</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalOrders">0</h3>
+                        <p>Total Orders</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="portfolioItems">0</h3>
+                        <p>Active Assets</p>
+                    </div>
+                </div>
+            </div>
+
+            <section class="section">
+                <div class="section-header">
+                    <h2>Order Requests</h2>
+                    <button class="btn btn-outline" id="refreshOrders">Refresh</button>
+                </div>
+                <div class="order-list" id="ordersList">
+                    <div class="empty-state" style="text-align:center; color:var(--text-muted); padding:2rem;">Loading orders...</div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <h2>Asset Manager</h2>
+                </div>
+
+                <div class="upload-zone">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-bottom:1rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p style="font-weight:600">Drag files here or click below</p>
+                    <p style="font-size:0.875rem; color:var(--text-muted)">Supports: Images, Videos</p>
+                    
+                    <div class="upload-controls">
+                        <select id="bucketSelect" class="form-select">
+                            <option value="animation">Animation</option>
+                            <option value="artwork">Artwork</option>
+                            <option value="video_editing">Video Editing</option>
+                        </select>
+                        <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none">
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Select Files</button>
+                        <button class="btn btn-success" id="uploadBtn">Start Upload</button>
+                    </div>
+                </div>
+
+                <div class="gallery-grid" id="filesGrid">
+                    </div>
+            </section>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+            <svg class="sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+
+        <div class="modal-backdrop" id="previewModal">
+            <div class="modal-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                    <h3 id="modalTitle">Order Details</h3>
+                    <button class="btn btn-outline" style="padding:0.25rem 0.5rem;" onclick="closeModal()">×</button>
+                </div>
+                <div id="modalBody"></div>
+            </div>
+        </div>
+
+        <div id="notificationToast" class="notification">Message</div>
+
+        <script is:inline>
+            // GLOBAL CONFIG
+            window.SUPABASE_URL = 'https://avmiweumvpveykxtamfm.supabase.co';
+
+            document.addEventListener('DOMContentLoaded', () => {
+                // --- THEME LOGIC ---
+                const themeToggle = document.getElementById('themeToggle');
+                const html = document.documentElement;
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                html.setAttribute('data-theme', savedTheme);
+
+                themeToggle.addEventListener('click', () => {
+                    const current = html.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    html.setAttribute('data-theme', next);
+                    localStorage.setItem('theme', next);
+                });
+
+                // --- DATA LOADING ---
+                loadPortfolio();
+                loadOrders();
+                loadStats();
+
+                // --- UPLOAD LOGIC ---
+                const uploadBtn = document.getElementById('uploadBtn');
+                const fileInput = document.getElementById('fileInput');
+                
+                uploadBtn.addEventListener('click', async () => {
+                    const files = fileInput.files;
+                    const bucket = document.getElementById('bucketSelect').value;
+
+                    if (!files.length) return showNotif('Please select files first', 'error');
+
+                    uploadBtn.disabled = true;
+                    uploadBtn.textContent = 'Uploading...';
+
+                    try {
+                        for (let file of files) {
+                            const formData = new FormData();
+                            formData.append('files', file);
+                            formData.append('bucket', bucket);
+
+                            // Assuming you have an API route set up at /api/uploads
+                            const res = await fetch('/api/uploads', { method: 'POST', body: formData });
+                            if (!res.ok) throw new Error('Upload failed');
+                        }
+                        showNotif('Upload successful!', 'success');
+                        fileInput.value = '';
+                        loadPortfolio(); // Refresh grid
+                    } catch (e) {
+                        console.error(e);
+                        showNotif('Upload failed', 'error');
+                    } finally {
+                        uploadBtn.disabled = false;
+                        uploadBtn.textContent = 'Start Upload';
+                    }
+                });
+
+                // --- REFRESH BUTTON ---
+                document.getElementById('refreshOrders').addEventListener('click', loadOrders);
+            });
+
+            // --- HELPER FUNCTIONS ---
+
+            async function loadPortfolio() {
+                const grid = document.getElementById('filesGrid');
+                try {
+                    const res = await fetch('/api/uploads');
+                    const files = await res.json();
+                    
+                    if (!files || !files.length) {
+                        grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-muted)">No assets uploaded yet.</p>';
+                        return;
+                    }
+
+                    grid.innerHTML = files.map(file => {
+                        const url = `${window.SUPABASE_URL}/storage/v1/object/public/${file.bucket}/${encodeURIComponent(file.path)}`;
+                        const isImg = file.mime?.startsWith('image');
+                        const isVid = file.mime?.startsWith('video');
+
+                        let preview = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">FILE</div>`;
+                        if(isImg) preview = `<img src="${url}" loading="lazy" alt="${file.filename}">`;
+                        if(isVid) preview = `<video src="${url}"></video>`;
+
+                        return `
+                        <div class="file-card">
+                            <div class="file-preview">${preview}</div>
+                            <div class="file-info">
+                                <div class="file-name" title="${file.filename}">${file.filename}</div>
+                                <span class="file-tag">${file.bucket}</span>
+                            </div>
+                            <button class="btn btn-danger delete-overlay" style="padding:4px 8px; font-size:12px" onclick="deleteAsset('${file.id}', '${file.filename}')">🗑</button>
+                        </div>
+                        `;
+                    }).join('');
+                    
+                    // Update Portfolio Count
+                    document.getElementById('portfolioItems').innerText = files.length;
+                    
+                } catch (e) {
+                    console.error('Portfolio Error', e);
+                }
+            }
+
+            async function loadOrders() {
+                const list = document.getElementById('ordersList');
+                try {
+                    const res = await fetch('/api/admin/orders');
+                    const orders = await res.json();
+
+                    if(!orders || !orders.length) {
+                        list.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-muted)">No orders found.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = orders.map(order => `
+                        <div class="order-item">
+                            <div style="flex:1">
+                                <div style="font-weight:700; font-size:1.1rem">${order.service_title || 'Service Request'}</div>
+                                <p style="color:var(--text-muted); font-size:0.9rem">${order.description || 'No description provided.'}</p>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:1rem">
+                                <span class="order-status status-${order.status}">${order.status}</span>
+                                <div style="display:flex;gap:0.5rem">
+                                    <button class="btn btn-success" style="padding:0.25rem 0.5rem" onclick="updateOrder('${order.id}', 'approve')">✓</button>
+                                    <button class="btn btn-danger" style="padding:0.25rem 0.5rem" onclick="updateOrder('${order.id}', 'reject')">✗</button>
+                                    <button class="btn btn-outline" style="padding:0.25rem 0.5rem" onclick='viewOrder(${JSON.stringify(order)})'>👁</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    updateStats(orders);
+
+                } catch (e) {
+                    console.error('Order Error', e);
+                }
+            }
+
+            async function deleteAsset(id, name) {
+                if(!confirm(`Delete ${name}?`)) return;
+                try {
+                    await fetch(`/api/uploads/${id}`, { method: 'DELETE' });
+                    showNotif('Asset deleted', 'success');
+                    loadPortfolio();
+                } catch(e) { showNotif('Delete failed', 'error'); }
+            }
+
+            async function updateOrder(id, action) {
+                try {
+                    await fetch(`/api/admin/orders/${id}/${action}`, { method: 'POST' });
+                    showNotif(`Order ${action}d`, 'success');
+                    loadOrders();
+                } catch(e) { showNotif('Action failed', 'error'); }
+            }
+
+            function viewOrder(order) {
+                const modal = document.getElementById('previewModal');
+                const body = document.getElementById('modalBody');
+                document.getElementById('modalTitle').innerText = `Order #${order.id}`;
+                
+                body.innerHTML = `
+                    <div style="display:grid; gap:1rem">
+                        <div><strong>Client:</strong> ${order.client_email || 'Unknown'}</div>
+                        <div><strong>Status:</strong> ${order.status}</div>
+                        <div><strong>Description:</strong><br>${order.description}</div>
+                        <div><strong>Budget:</strong> ${order.budget ? '$'+order.budget : 'N/A'}</div>
+                    </div>
+                `;
+                
+                modal.classList.add('show');
+            }
+
+            function closeModal() {
+                document.getElementById('previewModal').classList.remove('show');
+            }
+
+            function showNotif(msg, type) {
+                const el = document.getElementById('notificationToast');
+                el.innerText = msg;
+                el.className = `notification notif-${type} show`;
+                setTimeout(() => el.classList.remove('show'), 3000);
+            }
+
+            function updateStats(orders) {
+                if(!orders) return;
+                document.getElementById('totalOrders').innerText = orders.length;
+                document.getElementById('pendingCount').innerText = orders.filter(o => o.status === 'pending').length;
+            }
+
+            function loadStats() {
+                // Wrapper to handle initial load
+                // In a real app, you might have a dedicated /api/stats endpoint
+            }
+        </script>
+    </body>
 </html>

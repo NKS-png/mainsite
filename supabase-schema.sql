@@ -5,6 +5,7 @@ ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   full_name TEXT,
+  username TEXT UNIQUE,
   is_admin BOOLEAN DEFAULT FALSE
 );
 
