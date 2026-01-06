@@ -215,6 +215,13 @@ const pageDescription = "Learn about Nikhil, the creator behind NKScreates - a d
 					});
 				}
 			}
+
+			// Play about page entry sound
+			document.addEventListener('DOMContentLoaded', function() {
+				import('../lib/sound.ts').then(({ playAboutSound }) => {
+					playAboutSound();
+				}).catch(err => console.log('About page sound not available:', err));
+			});
 		</script>
 	</body>
 </html>

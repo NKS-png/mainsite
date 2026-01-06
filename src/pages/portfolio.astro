@@ -84,6 +84,14 @@ const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
 				document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
 				document.getElementById(tabName).style.display = 'block';
 			}
+
+			// Start background music and play entry sound for portfolio page
+			document.addEventListener('DOMContentLoaded', function() {
+				import('../lib/sound.ts').then(({ startBackgroundMusic, playPortfolioSound }) => {
+					playPortfolioSound();
+					setTimeout(() => startBackgroundMusic(), 500); // Start background music after entry sound
+				}).catch(err => console.log('Portfolio sounds not available:', err));
+			});
 		</script>
 	</body>
 </html>

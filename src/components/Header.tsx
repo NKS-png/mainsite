@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { supabase } from '../lib/supabase';
+import { playToggleSound } from '../lib/sound';
 
 interface User {
   id: string;
@@ -347,6 +348,7 @@ export default function Header() {
   };
 
   const toggleTheme = () => {
+    playToggleSound();
     const newTheme = isDarkTheme() ? 'light' : 'dark';
     setIsDarkTheme(!isDarkTheme());
     document.documentElement.setAttribute('data-theme', newTheme);

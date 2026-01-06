@@ -90,8 +90,28 @@ export const POST: APIRoute = async ({ request }) => {
         // Generate unique filename
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 15);
-        const fileExtension = file.name.split('.').pop();
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
         const filename = `${timestamp}_${randomId}.${fileExtension}`;
+
+        // Determine MIME type based on extension if browser didn't set it properly
+        let mimeType = file.type;
+        if (!mimeType || mimeType === 'application/octet-stream') {
+          const mimeTypes: { [key: string]: string } = {
+            'mkv': 'video/x-matroska',
+            'mp4': 'video/mp4',
+            'avi': 'video/x-msvideo',
+            'mov': 'video/quicktime',
+            'wmv': 'video/x-ms-wmv',
+            'flv': 'video/x-flv',
+            'webm': 'video/webm',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp'
+          };
+          mimeType = mimeTypes[fileExtension || ''] || file.type || 'application/octet-stream';
+        }
 
         // Check if bucket exists, if not create it
         console.log(`Checking bucket ${bucket}...`);
@@ -102,13 +122,26 @@ export const POST: APIRoute = async ({ request }) => {
           console.log(`Creating bucket ${bucket}...`);
           const { error: createError } = await supabase.storage.createBucket(bucket, {
             public: true,
-            allowedMimeTypes: ['image/*', 'video/*'],
+            allowedMimeTypes: ['image/*', 'video/*', 'video/x-matroska', 'application/octet-stream'],
             fileSizeLimit: 52428800 // 50MB
           });
 
           if (createError) {
             console.error('Bucket creation error:', createError);
             continue;
+          }
+        } else {
+          // Update existing bucket to ensure proper MIME types
+          console.log(`Updating bucket ${bucket} policies...`);
+          const { error: updateError } = await supabase.storage.updateBucket(bucket, {
+            public: true,
+            allowedMimeTypes: ['image/*', 'video/*', 'video/x-matroska', 'application/octet-stream'],
+            fileSizeLimit: 52428800 // 50MB
+          });
+
+          if (updateError) {
+            console.error('Bucket update error:', updateError);
+            // Continue anyway, as the bucket might already have permissive policies
           }
         }
 
@@ -118,7 +151,8 @@ export const POST: APIRoute = async ({ request }) => {
           .from(bucket)
           .upload(filename, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: mimeType
           });
 
         if (uploadError) {
@@ -127,7 +161,7 @@ export const POST: APIRoute = async ({ request }) => {
             bucket,
             filename,
             fileSize: file.size,
-            fileType: file.type,
+            fileType: mimeType,
             serviceKey: supabaseServiceKey ? 'Present' : 'Missing'
           });
           continue; // Skip this file but continue with others
@@ -143,7 +177,7 @@ export const POST: APIRoute = async ({ request }) => {
             bucket: bucket,
             path: filename,
             filename: file.name,
-            mime: file.type || 'application/octet-stream',
+            mime: mimeType,
             size: file.size,
             public: true
           })
@@ -155,7 +189,7 @@ export const POST: APIRoute = async ({ request }) => {
           console.error('Database error details:', {
             bucket,
             filename,
-            mime: file.type,
+            mime: mimeType,
             size: file.size
           });
           // Try to delete the uploaded file since DB insert failed

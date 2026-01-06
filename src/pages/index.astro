@@ -376,6 +376,55 @@ const portfolioItems = uploads.map((item, index) => ({
         }
       }
 
+      /* Performance optimizations for low-end devices */
+      @media (max-width: 768px) {
+        .bubble-background {
+          display: none; /* Hide bubbles on mobile for performance */
+        }
+
+        .cursor-follower {
+          display: none; /* Hide cursor follower on mobile */
+        }
+
+        /* Simplify animations on mobile */
+        .hero-visual video,
+        .work-media video {
+          animation: none;
+        }
+
+        /* Reduce hero video rotation frequency on mobile */
+        .showcase-item video {
+          animation-duration: 15s; /* Slower rotation */
+        }
+      }
+
+      /* Detect low-performance devices */
+      @media (max-width: 480px) {
+        /* Disable all background animations on very small screens */
+        .bubble-background,
+        .cursor-follower {
+          display: none !important;
+        }
+
+        /* Simplify hero animations */
+        .hero-gradient-1,
+        .hero-gradient-2,
+        .hero-particles {
+          animation: none;
+        }
+
+        /* Disable video autoplay on very low-end devices */
+        .hero-visual video,
+        .work-media video {
+          display: none;
+        }
+
+        .hero-visual img,
+        .work-media img {
+          display: block !important;
+        }
+      }
+
       /* Reduce motion for accessibility */
       @media (prefers-reduced-motion: reduce) {
         .bubble {
@@ -384,6 +433,189 @@ const portfolioItems = uploads.map((item, index) => ({
 
         .bubble.attracted {
           transform: none !important;
+        }
+
+        .cursor-follower {
+          animation: none;
+        }
+      }
+
+      /* Welcome Popup Styles */
+      .welcome-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .welcome-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .welcome-popup {
+        background: var(--card-bg, #ffffff);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        position: relative;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--primary, #2980b9);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+
+      .welcome-popup-overlay.active .welcome-popup {
+        transform: scale(1);
+      }
+
+      .popup-content h2 {
+        color: var(--primary, #2980b9);
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-family: var(--font-head, 'Cabin Sketch', cursive);
+      }
+
+      .popup-content p {
+        color: var(--text-col, #2c3e50);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      .popup-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .popup-btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: var(--font-body, 'Space Mono', monospace);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .login-btn {
+        background: var(--primary, #2980b9);
+        color: white;
+      }
+
+      .login-btn:hover {
+        background: #21618c;
+        transform: translateY(-2px);
+      }
+
+      .signup-btn {
+        background: var(--accent, #f1c40f);
+        color: #000;
+      }
+
+      .signup-btn:hover {
+        background: #d4ac0d;
+        transform: translateY(-2px);
+      }
+
+      .explore-btn {
+        background: transparent;
+        color: var(--primary, #2980b9);
+        border: 2px solid var(--primary, #2980b9);
+      }
+
+      .explore-btn:hover {
+        background: var(--primary, #2980b9);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      .popup-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: var(--text-col, #2c3e50);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .popup-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+      }
+
+      /* Dark theme for popup */
+      [data-theme="dark"] .welcome-popup {
+        background: var(--card-bg, #111827);
+        border-color: var(--primary, #5dade2);
+      }
+
+      [data-theme="dark"] .popup-content h2 {
+        color: var(--primary, #5dade2);
+      }
+
+      [data-theme="dark"] .popup-content p {
+        color: var(--text-col, #e2e8f0);
+      }
+
+      [data-theme="dark"] .explore-btn {
+        color: var(--primary, #5dade2);
+        border-color: var(--primary, #5dade2);
+      }
+
+      [data-theme="dark"] .explore-btn:hover {
+        background: var(--primary, #5dade2);
+        color: #000;
+      }
+
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .welcome-popup {
+          padding: 1.5rem;
+          margin: 1rem;
+        }
+
+        .popup-content h2 {
+          font-size: 1.5rem;
+        }
+
+        .popup-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .popup-btn {
+          width: 100%;
+          justify-content: center;
         }
       }
     </style>
@@ -400,6 +632,33 @@ const portfolioItems = uploads.map((item, index) => ({
 
     <!-- Header (shared component) -->
     <Header client:load />
+
+    <!-- Welcome Popup Modal -->
+    <div id="welcome-popup" class="welcome-popup-overlay">
+      <div class="welcome-popup">
+        <div class="popup-content">
+          <h2>Welcome{userEmail ? ` back` : ''} to NKScreates!</h2>
+          <p>
+            {userEmail ?
+              `Welcome back! Continue exploring amazing animations, videos, and digital art.` :
+              `Discover amazing animations, videos, and digital art. Join our community to explore more content.`
+            }
+          </p>
+          <div class="popup-buttons">
+            {userEmail ? (
+              <a href="/dashboard" class="popup-btn explore-btn">Explore Reels</a>
+            ) : (
+              <>
+                <a href="/login" class="popup-btn login-btn">Login</a>
+                <a href="/signup" class="popup-btn signup-btn">Sign Up</a>
+                <a href="/dashboard" class="popup-btn explore-btn">Explore Reels</a>
+              </>
+            )}
+          </div>
+        </div>
+        <button class="popup-close" onclick="closeWelcomePopup()">×</button>
+      </div>
+    </div>
 
     <!-- Modern Hero Section -->
     <section class="landing-hero">
@@ -565,17 +824,82 @@ const portfolioItems = uploads.map((item, index) => ({
 
     <!-- Loading Screen Script -->
     <script>
+      // Welcome Popup Functions
+      function showWelcomePopup() {
+        // Check if popup has already been shown in this session
+        if (localStorage.getItem('welcomePopupShown') === 'true') {
+          return;
+        }
+
+        const popup = document.getElementById('welcome-popup');
+        if (popup) {
+          popup.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          // Mark as shown for this session
+          localStorage.setItem('welcomePopupShown', 'true');
+
+          // Add sound effects to buttons
+          addButtonSounds();
+        }
+      }
+
+      function addButtonSounds() {
+        const loginBtn = document.querySelector('.login-btn');
+        const signupBtn = document.querySelector('.signup-btn');
+
+        if (loginBtn) {
+          loginBtn.addEventListener('click', () => {
+            import('../lib/sound.ts').then(({ playButtonSound }) => {
+              playButtonSound();
+            }).catch(err => console.log('Button sound not available:', err));
+          });
+        }
+
+        if (signupBtn) {
+          signupBtn.addEventListener('click', () => {
+            import('../lib/sound.ts').then(({ playButtonSound }) => {
+              playButtonSound();
+            }).catch(err => console.log('Button sound not available:', err));
+          });
+        }
+      }
+
+      function closeWelcomePopup() {
+        const popup = document.getElementById('welcome-popup');
+        if (popup) {
+          popup.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+
       document.addEventListener('DOMContentLoaded', function() {
+        // Performance detection
+        const isMobile = window.innerWidth <= 768;
+        const isLowEnd = window.innerWidth <= 480;
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
         const loadingScreen = document.getElementById('loading-screen');
         const loadingGif = document.getElementById('loading-gif');
 
         // Set appropriate gif based on screen size
         if (loadingGif) {
           const img = loadingGif as HTMLImageElement;
-          if (window.innerWidth <= 768) {
+          if (isLowEnd) {
+            img.src = '/mobile.gif';
+          } else if (isMobile) {
             img.src = '/mobile.gif';
           } else {
             img.src = '/start.gif';
+          }
+
+          // Play magic sound when GIF loads (only on non-mobile for performance)
+          if (!isMobile) {
+            img.addEventListener('load', function() {
+              // Import and play sound dynamically
+              import('../lib/sound.ts').then(({ playMagicSound }) => {
+                playMagicSound();
+              }).catch(err => console.log('Sound not available:', err));
+            });
           }
         }
 
@@ -587,10 +911,39 @@ const portfolioItems = uploads.map((item, index) => ({
             // Remove from DOM after fade animation completes
             setTimeout(function() {
               loadingScreen.style.display = 'none';
+              // Play home page entry sound (only on non-mobile)
+              if (!isMobile) {
+                import('../lib/sound.ts').then(({ playHomePageSound }) => {
+                  playHomePageSound();
+                }).catch(err => console.log('Home page sound not available:', err));
+              }
+
+              // Show welcome popup after 6 seconds from page load
+              setTimeout(function() {
+                showWelcomePopup();
+              }, 4000); // Additional 4 seconds after loading screen fades (total 6 seconds)
             }, 500);
           }
         }, 2000);
 
+        // Close popup when clicking outside
+        const popup = document.getElementById('welcome-popup');
+        if (popup) {
+          popup.addEventListener('click', function(e) {
+            if (e.target === popup) {
+              closeWelcomePopup();
+            }
+          });
+        }
+
+        // Close popup on Escape key (only on non-touch devices)
+        if (!isTouchDevice) {
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+              closeWelcomePopup();
+            }
+          });
+        }
       });
     </script>
 
@@ -599,13 +952,22 @@ const portfolioItems = uploads.map((item, index) => ({
     <!-- Cursor Follower and Bubble Animation Script -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
+        // Performance detection
+        const isMobile = window.innerWidth <= 768;
+        const isLowEnd = window.innerWidth <= 480;
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Skip all animations on mobile/low-end devices for performance
+        if (isMobile || isLowEnd) {
+          return;
+        }
+
         // ===== CURSOR FOLLOWER =====
         const cursorFollower = document.getElementById('cursorFollower') as HTMLElement;
         let cursorX = 0;
         let cursorY = 0;
         let followerX = 0;
         let followerY = 0;
-        let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         // Only enable cursor follower on non-touch devices
         if (!isTouchDevice && cursorFollower) {
@@ -758,6 +1120,11 @@ const portfolioItems = uploads.map((item, index) => ({
           setTimeout(() => clearInterval(interval), 3000);
         }
 
+        // Skip video rotation on mobile/low-end devices for performance
+        if (isMobile || isLowEnd) {
+          return;
+        }
+
         if (videoUploads && videoUploads.length > 1) {
           const heroVideo = document.getElementById('hero-video');
           const heroCategory = document.getElementById('hero-category');
@@ -767,8 +1134,8 @@ const portfolioItems = uploads.map((item, index) => ({
           let rotationInterval;
 
           function getRandomInterval() {
-            // Random interval between 5-10 seconds (5000-10000ms)
-            return Math.random() * 5000 + 5000;
+            // Random interval between 8-15 seconds on desktop (slower for performance)
+            return Math.random() * 7000 + 8000;
           }
 
           function changeVideo() {

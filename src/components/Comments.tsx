@@ -1,4 +1,5 @@
 import { createSignal, onMount } from 'solid-js';
+import { playButtonSound, playClickSound } from '../lib/sound';
 
 interface Comment {
   id: string;
@@ -68,6 +69,7 @@ export default function Comments(props: CommentsProps) {
   // Submit new comment
   const submitComment = async (e: Event) => {
     e.preventDefault();
+    playButtonSound();
 
     const content = newComment().trim();
     if (!content) return;
@@ -103,6 +105,7 @@ export default function Comments(props: CommentsProps) {
 
   // Delete comment
   const deleteComment = async (commentId: string) => {
+    playClickSound();
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
     setError('');
