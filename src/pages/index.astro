@@ -933,10 +933,10 @@ const portfolioItems = uploads.map((item, index) => ({
                 await playHomePageSound();
               }).catch(err => console.log('Home page sound not available:', err));
 
-              // Show welcome popup after 5.5 seconds from page load
+              // Show welcome popup after 2.5 seconds from page load
               setTimeout(function() {
                 showWelcomePopup();
-              }, 4500); // Additional 4.5 seconds after loading screen fades (total ~6 seconds)
+              }, 2000); // Additional 2 seconds after loading screen fades (total ~3.5 seconds)
             }, 500);
           }
         }, 1000);
