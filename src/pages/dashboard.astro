@@ -405,7 +405,7 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
                 <div class="stash-navigator">
                     <button class="nav-btn active hover-trigger" data-filter="artwork">Artwork</button>
                     <button class="nav-btn hover-trigger" data-filter="animation">Animation</button>
-                    <button class="nav-btn hover-trigger" data-filter="video">Video / YouTube</button>
+                    <button class="nav-btn hover-trigger" data-filter="video">Video Editing</button>
                 </div>
 			</div>
 
@@ -417,7 +417,7 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 					                   style={`transform: rotate(${item.rotation}deg);`}
 					               >
                         {item.mime.startsWith('video/') ? (
-                            <video src={item.src} class="stash-vid" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>
+                            <video src={item.src} class="stash-vid" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
                         ) : (
 						    <img src={item.src} alt={item.title} class="stash-img" loading="lazy" />
                         )}
