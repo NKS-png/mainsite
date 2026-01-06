@@ -1153,10 +1153,7 @@ const portfolioItems = uploads.map((item, index) => ({
           setTimeout(() => clearInterval(interval), 3000);
         }
 
-        // Skip video rotation on mobile devices for performance
-        if (isMobile) {
-          return;
-        }
+        // Video rotation enabled on all devices
 
         if (videoUploads && videoUploads.length > 1) {
           const heroVideo = document.getElementById('hero-video');
