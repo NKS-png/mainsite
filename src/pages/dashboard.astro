@@ -74,6 +74,11 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
+		<script>
+			// Mobile detection for performance optimization
+			(window as any).isMobile = window.innerWidth <= 768;
+		</script>
+
 		<style>
 			/* --- THEME --- */
 			:root {
@@ -565,7 +570,15 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 				el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('hovered'));
 			});
 
-			window.addEventListener('load', initReels);
+			window.addEventListener('load', () => {
+				initReels();
+				// Play dashboard sound on non-mobile
+				if (!window.isMobile) {
+					import('../lib/sound.ts').then(({ playDashboardSound }) => {
+						playDashboardSound();
+					}).catch(err => console.log('Dashboard sound not available:', err));
+				}
+			});
 		</script>
 	</body>
 </html>
