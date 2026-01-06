@@ -319,11 +319,3 @@ body {
 .notif-success { background: #10B981; }
 .notif-error { background: #EF4444; }
 .notification.show { transform: translateY(0); }
-
-/* Mobile tweaks */
-@media (max-width: 768px) {
-    .container { padding: 1rem; }
-    .header { flex-direction: column; align-items: flex-start; }
-    .upload-controls { flex-direction: column; width: 100%; }
-    .upload-controls button, .upload-controls select { width: 100%; }
-}

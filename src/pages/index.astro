@@ -86,7 +86,18 @@ const portfolioItems = uploads.map((item, index) => ({
     <meta name="generator" content={Astro.generator} />
     <title>NKScreates - Professional Animation & Digital Art</title>
     <meta name="description" content="Professional animation, video editing, and digital artwork services. Transform your vision into stunning visual experiences." />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+
+    <!-- Mobile-first performance: Detect mobile early and set flags -->
+    <script>
+      // Early mobile detection for performance optimization
+      (window as any).isMobile = window.innerWidth <= 768;
+      (window as any).isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+      // Set performance class on body for CSS targeting
+      document.documentElement.classList.add((window as any).isMobile ? 'mobile-device' : 'desktop-device');
+    </script>
+
+    <!-- GSAP will be loaded conditionally in body -->
     <style>
       /* Loading Screen Styles */
       .loading-screen {
@@ -376,14 +387,27 @@ const portfolioItems = uploads.map((item, index) => ({
         }
       }
 
+      /* Mobile-first performance optimizations */
+      .desktop-only {
+        display: none !important;
+      }
+
+      .mobile-device .desktop-only {
+        display: none !important;
+      }
+
+      .desktop-device .desktop-only {
+        display: block !important;
+      }
+
       /* Performance optimizations for low-end devices */
       @media (max-width: 768px) {
         .bubble-background {
-          display: none; /* Hide bubbles on mobile for performance */
+          display: none !important; /* Hide bubbles on mobile for performance */
         }
 
         .cursor-follower {
-          display: none; /* Hide cursor follower on mobile */
+          display: none !important; /* Hide cursor follower on mobile */
         }
 
         /* Simplify animations on mobile */
@@ -398,32 +422,7 @@ const portfolioItems = uploads.map((item, index) => ({
         }
       }
 
-      /* Detect low-performance devices */
-      @media (max-width: 480px) {
-        /* Disable all background animations on very small screens */
-        .bubble-background,
-        .cursor-follower {
-          display: none !important;
-        }
 
-        /* Simplify hero animations */
-        .hero-gradient-1,
-        .hero-gradient-2,
-        .hero-particles {
-          animation: none;
-        }
-
-        /* Disable video autoplay on very low-end devices */
-        .hero-visual video,
-        .work-media video {
-          display: none;
-        }
-
-        .hero-visual img,
-        .work-media img {
-          display: block !important;
-        }
-      }
 
       /* Reduce motion for accessibility */
       @media (prefers-reduced-motion: reduce) {
@@ -597,27 +596,37 @@ const portfolioItems = uploads.map((item, index) => ({
         color: #000;
       }
 
-      /* Mobile responsive */
+      /* Mobile responsive - simplified for performance */
       @media (max-width: 768px) {
         .welcome-popup {
-          padding: 1.5rem;
-          margin: 1rem;
+          padding: 1rem;
+          margin: 0.5rem;
+          max-width: 90vw;
         }
 
         .popup-content h2 {
-          font-size: 1.5rem;
+          font-size: 1.2rem;
+        }
+
+        .popup-content p {
+          font-size: 0.9rem;
         }
 
         .popup-buttons {
           flex-direction: column;
+          gap: 0.5rem;
           align-items: center;
         }
 
         .popup-btn {
           width: 100%;
+          padding: 0.6rem 1rem;
+          font-size: 0.9rem;
           justify-content: center;
         }
       }
+
+
     </style>
   </head>
   <body>
@@ -625,7 +634,7 @@ const portfolioItems = uploads.map((item, index) => ({
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
       <div class="loading-content">
-        <img id="loading-gif" src="/start.gif" alt="Loading..." class="loading-gif">
+        <img id="loading-gif" src="" alt="Loading..." class="loading-gif">
       </div>
     </div>
 
@@ -646,12 +655,12 @@ const portfolioItems = uploads.map((item, index) => ({
           </p>
           <div class="popup-buttons">
             {userEmail ? (
-              <a href="/dashboard" class="popup-btn explore-btn">Explore Reels</a>
+              <a href="/dashboard#reelsWrapper" class="popup-btn explore-btn">Explore Reels</a>
             ) : (
               <>
                 <a href="/login" class="popup-btn login-btn">Login</a>
                 <a href="/signup" class="popup-btn signup-btn">Sign Up</a>
-                <a href="/dashboard" class="popup-btn explore-btn">Explore Reels</a>
+                <a href="/dashboard#reelsWrapper" class="popup-btn explore-btn">Explore Reels</a>
               </>
             )}
           </div>
@@ -800,8 +809,8 @@ const portfolioItems = uploads.map((item, index) => ({
     <!-- Comments Section -->
     <Comments client:load />
 
-    <!-- Interactive Bubble Background -->
-    <div class="bubble-background" id="bubbleBackground">
+    <!-- Interactive Bubble Background - Only on desktop -->
+    <div class="bubble-background desktop-only" id="bubbleBackground">
       <div class="bubble" data-size="large"></div>
       <div class="bubble" data-size="medium"></div>
       <div class="bubble" data-size="small"></div>
@@ -840,6 +849,12 @@ const portfolioItems = uploads.map((item, index) => ({
 
           // Add sound effects to buttons
           addButtonSounds();
+
+          // Add event listener to close button
+          const closeBtn = popup.querySelector('.popup-close');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', closeWelcomePopup);
+          }
         }
       }
 
@@ -875,31 +890,30 @@ const portfolioItems = uploads.map((item, index) => ({
       document.addEventListener('DOMContentLoaded', function() {
         // Performance detection
         const isMobile = window.innerWidth <= 768;
-        const isLowEnd = window.innerWidth <= 480;
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         const loadingScreen = document.getElementById('loading-screen');
         const loadingGif = document.getElementById('loading-gif');
 
+        // On mobile, play loading GIF only once per session
+        if (isMobile && localStorage.getItem('mobileLoadingShown')) {
+          if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+          }
+          // Show welcome popup sooner
+          setTimeout(function() {
+            showWelcomePopup();
+          }, 1000);
+          return;
+        }
+
         // Set appropriate gif based on screen size
         if (loadingGif) {
           const img = loadingGif as HTMLImageElement;
-          if (isLowEnd) {
-            img.src = '/mobile.gif';
-          } else if (isMobile) {
+          if (isMobile) {
             img.src = '/mobile.gif';
           } else {
             img.src = '/start.gif';
-          }
-
-          // Play magic sound when GIF loads (only on non-mobile for performance)
-          if (!isMobile) {
-            img.addEventListener('load', function() {
-              // Import and play sound dynamically
-              import('../lib/sound.ts').then(({ playMagicSound }) => {
-                playMagicSound();
-              }).catch(err => console.log('Sound not available:', err));
-            });
           }
         }
 
@@ -911,6 +925,9 @@ const portfolioItems = uploads.map((item, index) => ({
             // Remove from DOM after fade animation completes
             setTimeout(function() {
               loadingScreen.style.display = 'none';
+              if (isMobile) {
+                localStorage.setItem('mobileLoadingShown', 'true');
+              }
               // Play home page entry sound (only on non-mobile)
               if (!isMobile) {
                 import('../lib/sound.ts').then(({ playHomePageSound }) => {
@@ -947,18 +964,34 @@ const portfolioItems = uploads.map((item, index) => ({
       });
     </script>
 
-    <script type="module" src="/scripts/animations.js"></script>
+    <!-- Conditionally load GSAP and animations only on desktop -->
+    <script>
+      // Load GSAP and animations only on desktop for performance
+      if (!(window as any).isMobile) {
+        // Load GSAP
+        const gsapScript = document.createElement('script');
+        gsapScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js';
+        document.head.appendChild(gsapScript);
+
+        // Load animations script after GSAP loads
+        gsapScript.onload = function() {
+          const animScript = document.createElement('script');
+          animScript.type = 'module';
+          animScript.src = '/scripts/animations.js';
+          document.body.appendChild(animScript);
+        };
+      }
+    </script>
 
     <!-- Cursor Follower and Bubble Animation Script -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         // Performance detection
         const isMobile = window.innerWidth <= 768;
-        const isLowEnd = window.innerWidth <= 480;
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-        // Skip all animations on mobile/low-end devices for performance
-        if (isMobile || isLowEnd) {
+        // Skip all animations on mobile devices for performance
+        if (isMobile) {
           return;
         }
 
@@ -1120,8 +1153,8 @@ const portfolioItems = uploads.map((item, index) => ({
           setTimeout(() => clearInterval(interval), 3000);
         }
 
-        // Skip video rotation on mobile/low-end devices for performance
-        if (isMobile || isLowEnd) {
+        // Skip video rotation on mobile devices for performance
+        if (isMobile) {
           return;
         }
 
