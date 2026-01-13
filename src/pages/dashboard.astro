@@ -346,6 +346,24 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
             }
             .lightbox-close:hover { transform: scale(1.1); background: var(--primary); border-color: var(--primary); }
 
+			/* --- WELCOME SECTION --- */
+			.welcome-section {
+				text-align: center;
+				margin-bottom: 2rem;
+			}
+			.welcome-section h1 {
+				color: var(--primary);
+				font-size: 3rem;
+				margin: 0 0 1rem 0;
+			}
+			.welcome-section p {
+				color: var(--text-col);
+				font-size: 1.1rem;
+				max-width: 600px;
+				margin: 0 auto;
+				opacity: 0.8;
+			}
+
 			/* --- USER INFO SECTION --- */
 			.user-info-section {
 				background: var(--card-bg); border: 2px solid var(--text-col);
@@ -389,6 +407,11 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 		<Header client:load />
 
 		<div class="main-container">
+
+			<div class="welcome-section">
+				<h1>Welcome to NKScreates</h1>
+				<p>Explore our portfolio of digital art, animation, and video editing projects. Scroll through the reel feed and browse the stash to see our latest work.</p>
+			</div>
 
 			{storedUser && userProfile ? (
 				<div class="user-info-section">
