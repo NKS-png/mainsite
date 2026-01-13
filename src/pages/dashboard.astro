@@ -7,11 +7,26 @@ const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 
 // --- DATA FETCHING ---
 let storedUser = null;
+let userProfile = null;
 try {
 	const { data: { user } } = await supabase.auth.getUser();
 	storedUser = user || null;
+
+	// Fetch user profile metadata
+	if (storedUser) {
+		const { data: profile, error: profileError } = await supabase
+			.from('profiles')
+			.select('full_name, username, is_admin')
+			.eq('id', storedUser.id)
+			.single();
+
+		if (!profileError && profile) {
+			userProfile = profile;
+		}
+	}
 } catch (e) {
 	storedUser = null;
+	userProfile = null;
 }
 
 const { data: uploads, error } = await supabase
@@ -52,8 +67,8 @@ const baseReelItems = allItems.filter(i => i.mime && (i.mime.startsWith('video/'
 // Fallback
 if (baseReelItems.length === 0) {
 	baseReelItems.push(
-		{ id: 'f1', title: 'Demo 1', src: 'https://cdn.coverr.co/videos/coverr-yellow-ink-in-water-5527/1080p.mp4', mime: 'video/mp4' },
-		{ id: 'f2', title: 'Demo 2', src: 'https://cdn.coverr.co/videos/coverr-blue-and-yellow-paint-mixing-5528/1080p.mp4', mime: 'video/mp4' }
+		{ id: 'f1', title: 'Demo 1', category: 'Video Edit', filterCat: 'video', src: 'https://cdn.coverr.co/videos/coverr-yellow-ink-in-water-5527/1080p.mp4', mime: 'video/mp4', bucket: 'demo', rotation: 0 },
+		{ id: 'f2', title: 'Demo 2', category: 'Video Edit', filterCat: 'video', src: 'https://cdn.coverr.co/videos/coverr-blue-and-yellow-paint-mixing-5528/1080p.mp4', mime: 'video/mp4', bucket: 'demo', rotation: 0 }
 	);
 }
 
@@ -331,6 +346,24 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
             }
             .lightbox-close:hover { transform: scale(1.1); background: var(--primary); border-color: var(--primary); }
 
+			/* --- USER INFO SECTION --- */
+			.user-info-section {
+				background: var(--card-bg); border: 2px solid var(--text-col);
+				border-radius: 15px; padding: 2rem; margin-bottom: 2rem;
+				box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+			}
+			[data-theme="dark"] .user-info-section {
+				border-color: var(--text-col);
+				box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+			}
+			.user-welcome h3 {
+				color: var(--primary); font-size: 1.8rem; margin: 0 0 0.5rem 0;
+			}
+			.user-welcome p {
+				color: var(--text-col); font-size: 1.1rem; margin: 0;
+				opacity: 0.8;
+			}
+
 			/* --- NAV HUB --- */
 			.nav-hub {
 				display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 6rem;
@@ -342,7 +375,7 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 				font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;
 				transition: all 0.2s; box-shadow: 4px 4px 0px var(--accent);
 			}
-            [data-theme="dark"] .nav-pill { background: var(--card-bg); box-shadow: 4px 4px 0px var(--primary); }
+			         [data-theme="dark"] .nav-pill { background: var(--card-bg); box-shadow: 4px 4px 0px var(--primary); }
 			.nav-pill:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--primary); }
 
 
@@ -356,7 +389,16 @@ const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...
 		<Header client:load />
 
 		<div class="main-container">
-			
+
+			{storedUser && userProfile ? (
+				<div class="user-info-section">
+					<div class="user-welcome">
+						<h3>Welcome back, {userProfile.full_name || storedUser.email?.split('@')[0] || 'User'}!</h3>
+						{userProfile.username ? <p>@{userProfile.username}</p> : null}
+					</div>
+				</div>
+			) : null}
+
 			<div class="section-header">
 				<h2 class="section-title">The Reel Feed</h2>
 				<p>Scroll to Watch</p>

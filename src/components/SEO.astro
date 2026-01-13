@@ -1,0 +1,133 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+  type?: 'website' | 'article';
+  canonical?: string;
+  keywords?: string;
+  author?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+}
+
+const {
+  title = "NKScreates - Professional Animation & Digital Art",
+  description = "Professional animation, video editing, and digital artwork services. Transform your vision into stunning visual experiences.",
+  image = "/favicon.svg",
+  url = "https://nkscreates.com",
+  type = "website",
+  canonical,
+  keywords = "digital art, animation, video editing, web development, portfolio, NKS, creative services",
+  author = "NKScreates",
+  publishedTime,
+  modifiedTime
+} = Astro.props;
+
+// Ensure URL is absolute
+const absoluteUrl = url.startsWith('http') ? url : `https://nkscreates.com${url}`;
+
+// Ensure image URL is absolute
+const absoluteImage = image.startsWith('http') ? image : `https://nkscreates.com${image}`;
+
+// Canonical URL
+const canonicalUrl = canonical || absoluteUrl;
+
+// Structured data for website
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "NKScreates",
+  "url": "https://nkscreates.com",
+  "description": description,
+  "author": {
+    "@type": "Person",
+    "name": author
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "NKScreates",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://nkscreates.com/favicon.svg"
+    }
+  }
+};
+
+// Structured data for article if type is article
+const articleStructuredData = type === 'article' ? {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": title,
+  "description": description,
+  "image": absoluteImage,
+  "author": {
+    "@type": "Person",
+    "name": author
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "NKScreates",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://nkscreates.com/favicon.svg"
+    }
+  },
+  "url": absoluteUrl,
+  "datePublished": publishedTime,
+  "dateModified": modifiedTime
+} : null;
+---
+
+<!-- Basic Meta Tags -->
+<meta charset="utf-8" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+<meta name="keywords" content={keywords} />
+<meta name="author" content={author} />
+<meta name="robots" content="index, follow" />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={absoluteUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={absoluteImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content="NKScreates" />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={absoluteUrl} />
+<meta property="twitter:title" content={title} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={absoluteImage} />
+<meta property="twitter:site" content="@nkscreates" />
+
+<!-- Article specific meta tags -->
+{type === 'article' && publishedTime && (
+  <meta property="article:published_time" content={publishedTime} />
+)}
+{type === 'article' && modifiedTime && (
+  <meta property="article:modified_time" content={modifiedTime} />
+)}
+{type === 'article' && author && (
+  <meta property="article:author" content={author} />
+)}
+
+<!-- Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify(websiteStructuredData)}></script>
+{articleStructuredData && (
+  <script type="application/ld+json" set:html={JSON.stringify(articleStructuredData)}></script>
+)}

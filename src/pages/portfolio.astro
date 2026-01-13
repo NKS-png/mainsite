@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase';
 import Header from '../components/Header.tsx';
 import '../styles/global.css';
+import SEO from '../components/SEO.astro';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 
@@ -19,7 +20,7 @@ const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width" />
-		<title>Portfolio - NKScreates</title>
+		<SEO title="Portfolio - NKScreates" description="Explore our portfolio of digital art, animation, and video editing projects by NKScreates." />
 	</head>
 	<body>
 		<Header client:load />

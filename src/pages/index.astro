@@ -3,6 +3,7 @@ import { supabase, createSupabaseServerClient } from '../lib/supabase';
 import '../styles/global.css';
 import Header from '../components/Header.tsx';
 import Comments from '../components/Comments.tsx';
+import SEO from '../components/SEO.astro';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 
@@ -80,12 +81,7 @@ const portfolioItems = uploads.map((item, index) => ({
 
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
-    <title>NKScreates - Professional Animation & Digital Art</title>
-    <meta name="description" content="Professional animation, video editing, and digital artwork services. Transform your vision into stunning visual experiences." />
+    <SEO />
 
     <!-- Mobile-first performance: Detect mobile early and set flags -->
     <script>
