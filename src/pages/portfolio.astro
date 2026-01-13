@@ -42,7 +42,6 @@ const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
 							) : (
 								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
 							)}
-							<p>{item.filename}</p>
 						</div>
 					))}
 				</div>
@@ -52,13 +51,12 @@ const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
 					{artwork.map(item => (
 						<div class="item">
 							{item.mime?.startsWith('video/') ? (
-								<video controls>
+								<video controls preload="metadata">
 									<source src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} type={item.mime} />
 								</video>
 							) : (
 								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
 							)}
-							<p>{item.filename}</p>
 						</div>
 					))}
 				</div>
@@ -74,7 +72,6 @@ const videoEditing = uploads?.filter(u => u.bucket === 'video_editing') || [];
 							) : (
 								<img src={`${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`} alt={item.filename} />
 							)}
-							<p>{item.filename}</p>
 						</div>
 					))}
 				</div>
