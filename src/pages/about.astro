@@ -17,6 +17,60 @@ const pageDescription = "Learn about Nikhil, the creator behind NKScreates - a d
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={pageDescription} />
 		<meta property="og:type" content="website" />
+		
+		<style>
+			.avatar-image {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				border-radius: 50%;
+				border: 4px solid var(--primary);
+				box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+				transition: transform 0.3s ease, box-shadow 0.3s ease;
+			}
+			
+			.avatar-image:hover {
+				transform: scale(1.05);
+				box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+			}
+			
+			.wipp-link {
+				color: var(--primary);
+				text-decoration: none;
+				font-weight: bold;
+				position: relative;
+				transition: color 0.3s ease;
+			}
+			
+			.wipp-link:hover {
+				color: var(--accent);
+			}
+			
+			.wipp-link::after {
+				content: '';
+				position: absolute;
+				width: 0;
+				height: 2px;
+				bottom: -2px;
+				left: 0;
+				background-color: var(--accent);
+				transition: width 0.3s ease;
+			}
+			
+			.wipp-link:hover::after {
+				width: 100%;
+			}
+			
+			/* Dark mode support */
+			[data-theme="dark"] .avatar-image {
+				border-color: var(--primary);
+				box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+			}
+			
+			[data-theme="dark"] .avatar-image:hover {
+				box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+			}
+		</style>
 	</head>
 	<body>
 
@@ -42,11 +96,7 @@ const pageDescription = "Learn about Nikhil, the creator behind NKScreates - a d
 						</div>
 						<div class="about-hero-visual">
 							<div class="about-avatar">
-								<div class="avatar-placeholder">
-									<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-										<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-									</svg>
-								</div>
+								<img src="/pfp.jpg" alt="Nikhil - NKScreates Profile Picture" class="avatar-image" />
 							</div>
 						</div>
 					</div>
@@ -70,6 +120,9 @@ const pageDescription = "Learn about Nikhil, the creator behind NKScreates - a d
 								</p>
 								<p>
 									With years of experience in digital media, I specialize in creating compelling visuals that capture attention and convey messages effectively. Whether it's bringing characters to life through animation, crafting stunning digital artwork, or editing videos that tell stories, I approach each project with creativity, precision, and attention to detail.
+								</p>
+								<p>
+									Beyond my creative work, I'm also the creator of <strong><a href="https://wipp.site" target="_blank" rel="noopener noreferrer" class="wipp-link">wipp.site</a></strong> — a platform designed to help creators showcase their work and connect with their audience in meaningful ways.
 								</p>
 								<p>
 									My journey in digital art began with a simple curiosity about how technology could bring imagination to life. Today, I work with clients ranging from individual creators to small businesses, helping them transform their ideas into visual experiences that resonate with their audience.

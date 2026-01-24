@@ -33,6 +33,53 @@ if (supabase) {
   }
 }
 
+// --- REEL FEED DATA PROCESSING ---
+const { data: reelUploads, error: reelError } = await supabase
+	.from('uploads')
+	.select('*')
+	.eq('public', true)
+	.order('created_at', { ascending: false });
+
+if (reelError) console.error('Supabase Error:', reelError);
+
+// --- STRICT BUCKET MAPPING FOR REELS ---
+const allReelItems = (reelUploads || []).map((item) => {
+    let filterCat = 'artwork'; // Default
+    
+    if (item.bucket === 'animation') {
+        filterCat = 'animation';
+    } else if (item.bucket === 'video_editing') {
+        filterCat = 'video';
+    } else if (item.bucket === 'artwork') {
+        filterCat = 'artwork';
+    }
+
+    return {
+        id: item.id,
+        title: item.filename || 'Untitled',
+        category: filterCat === 'video' ? 'Video Edit' : filterCat === 'animation' ? 'Animation' : 'Artwork',
+        filterCat: filterCat, // internal filter tag
+        src: `${supabaseUrl}/storage/v1/object/public/${item.bucket}/${encodeURIComponent(item.path)}`,
+        mime: item.mime,
+        bucket: item.bucket,
+        rotation: Math.random() * 4 - 2
+    };
+});
+
+// Reels: Include both videos and images
+const baseReelItems = allReelItems.filter(i => i.mime && (i.mime.startsWith('video/') || i.mime.startsWith('image/')));
+
+// Fallback
+if (baseReelItems.length === 0) {
+	baseReelItems.push(
+		{ id: 'f1', title: 'Demo 1', category: 'Video Edit', filterCat: 'video', src: 'https://cdn.coverr.co/videos/coverr-yellow-ink-in-water-5527/1080p.mp4', mime: 'video/mp4', bucket: 'demo', rotation: 0 },
+		{ id: 'f2', title: 'Demo 2', category: 'Video Edit', filterCat: 'video', src: 'https://cdn.coverr.co/videos/coverr-blue-and-yellow-paint-mixing-5528/1080p.mp4', mime: 'video/mp4', bucket: 'demo', rotation: 0 }
+	);
+}
+
+// Infinite Scroll Array
+const infiniteReels = [...baseReelItems, ...baseReelItems, ...baseReelItems, ...baseReelItems];
+
 // Check for user session to display email or display name in header
 // But skip if we're coming from a logout redirect
 const isLogout = Astro.url.searchParams.has('logout');
@@ -622,6 +669,412 @@ const portfolioItems = uploads.map((item, index) => ({
         }
       }
 
+      /* --- REEL FEED STYLES --- */
+      .reel-feed-section {
+        padding: 4rem 0;
+        background: var(--paper);
+      }
+
+      .reel-feed-layout {
+        display: grid;
+        grid-template-columns: 1fr 420px 1fr;
+        gap: 2rem;
+        align-items: start;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .reel-sidebar {
+        position: sticky;
+        top: 6rem;
+        height: fit-content;
+      }
+
+      .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .info-card {
+        background: var(--card-bg, #fff);
+        border: 2px solid var(--text-col);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      [data-theme="dark"] .info-card {
+        background: var(--card-bg);
+        border-color: var(--text-col);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      }
+
+      .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 8px 8px 20px rgba(0,0,0,0.15);
+      }
+
+      [data-theme="dark"] .info-card:hover {
+        box-shadow: 0 0 25px var(--primary);
+        border-color: var(--primary);
+      }
+
+      .info-card h3 {
+        font-family: var(--font-head);
+        color: var(--primary);
+        margin: 0 0 0.5rem 0;
+        font-size: 1.4rem;
+      }
+
+      .info-card h4 {
+        font-family: var(--font-head);
+        color: var(--primary);
+        margin: 0 0 0.75rem 0;
+        font-size: 1.2rem;
+      }
+
+      .info-card p {
+        margin: 0 0 1rem 0;
+        line-height: 1.5;
+        color: var(--text-col);
+        opacity: 0.8;
+      }
+
+      .info-card ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: var(--text-col);
+        opacity: 0.8;
+      }
+
+      .info-card li {
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+        color: var(--text-col);
+      }
+
+      .sidebar-btn {
+        display: inline-block;
+        background: var(--primary);
+        color: #fff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: bold;
+        text-align: center;
+        transition: all 0.2s;
+        border: 2px solid var(--primary);
+      }
+
+      .sidebar-btn:hover {
+        background: transparent;
+        color: var(--primary);
+        transform: translateY(-1px);
+      }
+
+      .social-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .social-links a {
+        color: var(--primary);
+        text-decoration: none;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        transition: all 0.2s;
+      }
+
+      [data-theme="dark"] .social-links a {
+        border-bottom-color: rgba(255,255,255,0.2);
+      }
+
+      .social-links a:hover {
+        color: var(--accent);
+        padding-left: 0.5rem;
+      }
+
+      .reel-center {
+        display: flex;
+        justify-content: center;
+      }
+
+      .reels-wrapper {
+        position: relative;
+        width: 100%; max-width: 420px;
+        height: 85vh; max-height: 900px;
+        transition: all 0.3s ease-in-out;
+      }
+
+      .reels-wrapper.fullscreen {
+        position: fixed; top: 0; left: 0; 
+        width: 100vw; height: 100dvh;
+        max-width: none; max-height: none;
+        z-index: 9999; margin: 0;
+        background: #000;
+      }
+
+      .reels-container {
+        width: 100%; height: 100%;
+        border: 4px solid var(--text-col);
+        border-radius: 30px;
+        background: #000;
+        box-shadow: 15px 15px 0px var(--primary);
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+      }
+      
+      .reels-wrapper.fullscreen .reels-container {
+        border: none; border-radius: 0; box-shadow: none;
+      }
+
+      .reels-container::-webkit-scrollbar { display: none; }
+
+      .reel-item {
+        height: 100%; width: 100%;
+        scroll-snap-align: center; 
+        scroll-snap-stop: always;
+        position: relative;
+        display: flex; align-items: center; justify-content: center;
+        background: #000;
+      }
+
+      .reel-video {
+        width: 100%; height: 100%;
+        object-fit: contain; 
+        opacity: 0.6; transition: opacity 0.3s;
+      }
+      .reel-item.active .reel-video { opacity: 1; }
+
+      .reel-ui {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        padding: 20px 20px 40px 20px;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+        color: #fff; pointer-events: none; text-align: left;
+      }
+      .reel-title { font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+      .reel-tag { 
+        display: inline-block; background: var(--accent); color: #000; 
+        padding: 2px 8px; font-size: 0.8rem; border-radius: 4px; font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .controls-layer {
+        position: absolute; top: 20px; right: 20px;
+        z-index: 10; display: flex; flex-direction: column; gap: 15px;
+        pointer-events: auto;
+      }
+
+      .action-btn {
+        width: 45px; height: 45px;
+        background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+        border: 2px solid #fff; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; cursor: pointer; transition: transform 0.2s; font-size: 1.2rem;
+      }
+      .action-btn:active { transform: scale(0.9); background: var(--accent); border-color: var(--accent); color: #000; }
+      
+      .mute-toggle {
+        position: absolute; top: 20px; left: 20px; z-index: 10;
+        background: rgba(0,0,0,0.5); color: #fff;
+        padding: 8px 12px; border-radius: 20px; font-size: 0.8rem;
+        display: flex; align-items: center; gap: 8px; cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.3);
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 1200px) {
+        .reel-feed-layout {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+        
+        .reel-sidebar {
+          position: static;
+          order: 3;
+        }
+        
+        .reel-center {
+          order: 1;
+        }
+        
+        .left-sidebar {
+          order: 2;
+        }
+        
+        .right-sidebar {
+          order: 3;
+        }
+        
+        .sidebar-content {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar-content {
+          grid-template-columns: 1fr;
+        }
+        
+        .reels-wrapper {
+          height: 70vh;
+          max-height: 600px;
+        }
+      }
+
+      /* --- WIPP.SITE FLOATING BUTTON --- */
+      .wipp-floating-btn {
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        z-index: 9999;
+        transition: all 0.3s ease;
+      }
+
+      .wipp-btn-link {
+        display: block;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #fff;
+        text-decoration: none;
+        border-radius: 50px;
+        padding: 16px 24px;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.3);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .wipp-btn-link:hover {
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        border-color: rgba(255,255,255,0.6);
+      }
+
+      .wipp-btn-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        font-size: 16px;
+        white-space: nowrap;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      }
+
+      .wipp-icon {
+        font-size: 22px;
+        animation: pulse 2s infinite;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+
+      .wipp-tooltip {
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.95);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: bold;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        margin-right: 15px;
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      }
+
+      .wipp-tooltip::after {
+        content: '';
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 8px solid transparent;
+        border-left-color: rgba(0,0,0,0.95);
+      }
+
+      .wipp-btn-link:hover .wipp-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(-50%) translateX(-8px);
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+          filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+        }
+      }
+
+      /* Dark mode support */
+      [data-theme="dark"] .wipp-floating-btn {
+        filter: brightness(1.2) saturate(1.1);
+      }
+
+      [data-theme="dark"] .wipp-tooltip {
+        background: rgba(255,255,255,0.95);
+        color: #000;
+        border-color: rgba(0,0,0,0.2);
+      }
+
+      [data-theme="dark"] .wipp-tooltip::after {
+        border-left-color: rgba(255,255,255,0.95);
+      }
+
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .wipp-floating-btn {
+          right: 15px;
+          top: auto;
+          bottom: 20px;
+          transform: none;
+        }
+        
+        .wipp-btn-link {
+          padding: 14px 20px;
+          border-width: 2px;
+        }
+        
+        .wipp-btn-content {
+          font-size: 15px;
+          gap: 8px;
+        }
+        
+        .wipp-icon {
+          font-size: 20px;
+        }
+        
+        .wipp-tooltip {
+          display: none; /* Hide tooltip on mobile for cleaner look */
+        }
+      }
+
+      /* Ensure button doesn't interfere with other fixed elements */
+      @media (max-width: 768px) {
+        .wipp-floating-btn {
+          bottom: 80px; /* Above mobile navigation if any */
+        }
+      }
+
 
     </style>
   </head>
@@ -632,6 +1085,19 @@ const portfolioItems = uploads.map((item, index) => ({
       <div class="loading-content">
         <img id="loading-gif" src="" alt="Loading..." class="loading-gif">
       </div>
+    </div>
+
+    <!-- Fixed Wipp.site Button -->
+    <div class="wipp-floating-btn" id="wippFloatingBtn">
+      <a href="https://wipp.site" target="_blank" rel="noopener noreferrer" class="wipp-btn-link">
+        <div class="wipp-btn-content">
+          <span class="wipp-icon">🎨</span>
+          <span class="wipp-text">wipp.site</span>
+        </div>
+        <div class="wipp-tooltip">
+          Creative Portfolio & WIP Community Platform
+        </div>
+      </a>
     </div>
 
 
@@ -730,6 +1196,119 @@ const portfolioItems = uploads.map((item, index) => ({
       </div>
     </section>
 
+    <!-- Reel Feed Section -->
+    <section class="reel-feed-section">
+      <div class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">The Reel Feed</h2>
+          <p class="section-subtitle">Scroll to Watch</p>
+        </div>
+
+        <div class="reel-feed-layout">
+          <!-- Left Sidebar -->
+          <div class="reel-sidebar left-sidebar">
+            <div class="sidebar-content">
+              <div class="info-card">
+                <h3>🎨 NKScreates</h3>
+                <p>Professional digital artist specializing in animation, video editing, and creative design.</p>
+              </div>
+              
+              <div class="info-card">
+                <h4>✨ Services</h4>
+                <ul>
+                  <li>Digital Art & Illustration</li>
+                  <li>2D/3D Animation</li>
+                  <li>Video Editing & Motion Graphics</li>
+                  <li>Logo & Brand Design</li>
+                </ul>
+              </div>
+
+              <div class="info-card">
+                <h4>🏆 Experience</h4>
+                <p>5+ years creating stunning visuals for clients worldwide. From concept to completion, bringing your vision to life.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center Reel -->
+          <div class="reel-center">
+            <div class="reels-wrapper" id="reelsWrapper">
+              <div class="mute-toggle" onclick="toggleMuteAll()">
+                <span id="muteIcon">🔇</span> Unmute
+              </div>
+              <div class="controls-layer">
+                <button class="action-btn expand-btn" id="expandBtn" title="Fullscreen">⛶</button>
+              </div>
+
+              <div class="reels-container" id="reelsContainer">
+                {infiniteReels.map((item, index) => (
+                  <div class="reel-item" data-index={index}>
+                    {item.mime.startsWith('video/') ? (
+                      <video
+                        class="reel-video"
+                        src={item.src}
+                        loop
+                        playsinline
+                        muted
+                        preload="metadata"
+                      ></video>
+                    ) : (
+                      <img
+                        class="reel-video"
+                        src={item.src}
+                        alt={item.title}
+                        style="object-fit: contain; background: #000;"
+                      />
+                    )}
+                    <div class="reel-ui">
+                      <span class="reel-tag">{item.category}</span>
+                      <!-- File name removed -->
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Sidebar -->
+          <div class="reel-sidebar right-sidebar">
+            <div class="sidebar-content">
+              <div class="info-card">
+                <h4>📞 Get In Touch</h4>
+                <p>Ready to start your project? Let's discuss your creative needs.</p>
+                <a href="/services" class="sidebar-btn">View Services</a>
+              </div>
+
+              <div class="info-card">
+                <h4>🌐 Follow Me</h4>
+                <div class="social-links">
+                  <a href="https://www.youtube.com/@itsnks7418" target="_blank">YouTube</a>
+                  <a href="https://www.instagram.com/nks_919/" target="_blank">Instagram</a>
+                  <a href="https://www.fiverr.com/nksbro" target="_blank">Fiverr</a>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h4>💡 Why Choose NKS?</h4>
+                <ul>
+                  <li>Fast turnaround times</li>
+                  <li>Unlimited revisions</li>
+                  <li>Professional quality</li>
+                  <li>Competitive pricing</li>
+                </ul>
+              </div>
+
+              <div class="info-card">
+                <h4>☕ Support</h4>
+                <p>Enjoying the content? Support the creator!</p>
+                <a href="https://buymeacoffee.com/nikhilasraq" target="_blank" class="sidebar-btn">Buy Me Coffee</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
     <!-- Featured Work -->
     <section class="featured-work">
@@ -792,8 +1371,8 @@ const portfolioItems = uploads.map((item, index) => ({
           </div>
           <h2>Support This Project</h2>
           <p>Your support helps keep this project alive and growing. All donations are optional and go directly toward development, community features, and creating more content.</p>
-          <a href="upi://pay?pa=9971158189@pthdfc&pn=NKScreates&am=0&cu=INR" target="_blank" rel="noopener noreferrer" class="donation-button">
-            <span>Support with UPI</span>
+          <a href="https://buymeacoffee.com/nikhilasraq" target="_blank" rel="noopener noreferrer" class="donation-button">
+            <span>Buy Me a Coffee</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -1201,6 +1780,68 @@ const portfolioItems = uploads.map((item, index) => ({
           });
         }
       });
+    </script>
+
+    <!-- Reel Feed JavaScript -->
+    <script is:inline>
+      // REELS LOGIC
+      const initReels = () => {
+        const container = document.getElementById('reelsContainer');
+        const wrapper = document.getElementById('reelsWrapper');
+        const expandBtn = document.getElementById('expandBtn');
+        
+        if (!container || !wrapper || !expandBtn) return;
+        
+        let isMuted = true;
+
+        window.toggleMuteAll = () => {
+          isMuted = !isMuted;
+          const muteIcon = document.getElementById('muteIcon');
+          if (muteIcon) {
+            muteIcon.textContent = isMuted ? '🔇' : '🔊';
+          }
+          document.querySelectorAll('.reel-video').forEach(v => v.muted = isMuted);
+        };
+
+        expandBtn.addEventListener('click', () => {
+          wrapper.classList.toggle('fullscreen');
+          expandBtn.textContent = wrapper.classList.contains('fullscreen') ? '✕' : '⛶';
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && wrapper.classList.contains('fullscreen')) {
+            wrapper.classList.remove('fullscreen');
+            expandBtn.textContent = '⛶';
+          }
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const media = entry.target.querySelector('video, img');
+            const item = entry.target;
+            if (entry.isIntersecting) {
+              item.classList.add('active');
+              // Only handle video-specific logic for videos
+              if (media && media.tagName === 'VIDEO') {
+                media.muted = isMuted;
+                media.currentTime = 0;
+                media.play().catch(e => {});
+              }
+            } else {
+              item.classList.remove('active');
+              // Only pause videos
+              if (media && media.tagName === 'VIDEO') {
+                media.pause();
+              }
+            }
+          });
+        }, { threshold: 0.6, root: container });
+
+        document.querySelectorAll('.reel-item').forEach(item => observer.observe(item));
+      };
+
+      // Initialize reels when DOM is loaded
+      document.addEventListener('DOMContentLoaded', initReels);
     </script>
 
   </body>
