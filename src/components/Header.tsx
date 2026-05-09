@@ -16,6 +16,7 @@ export default function Header() {
   const [isDarkTheme, setIsDarkTheme] = createSignal(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = createSignal(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = createSignal(false);
+  const [isHeaderHidden, setIsHeaderHidden] = createSignal(false);
 
   // --- STYLES (Embedded for Single File Portability) ---
   const styles = `
@@ -43,21 +44,31 @@ export default function Header() {
 
     .site-header {
       position: sticky;
-      top: 0;
+      top: 1rem;
       z-index: 50;
-      width: 100%;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      background-color: var(--header-bg);
-      border-bottom: 1px solid var(--header-border);
-      transition: border-color 0.3s, background-color 0.3s;
+      width: min(1120px, calc(100% - 2rem));
+      margin: 1rem auto 0;
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      background-color: color-mix(in srgb, var(--header-bg) 92%, white 8%);
+      border: 1px solid color-mix(in srgb, var(--header-border) 70%, transparent);
+      border-radius: 999px;
+      box-shadow: 0 18px 50px rgb(0 0 0 / 0.12);
+      overflow: hidden;
+      transition: transform 0.3s ease, opacity 0.3s ease, border-color 0.3s, background-color 0.3s;
+    }
+
+    .site-header.is-hidden {
+      transform: translateY(calc(-130% - 1rem));
+      opacity: 0;
+      pointer-events: none;
     }
 
     .header-content {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 0 1.5rem;
-      height: 4rem;
+      padding: 0 1.1rem;
+      height: 3.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -65,7 +76,7 @@ export default function Header() {
 
     .brand-link { text-decoration: none; }
     .brand-name {
-      font-size: 1.5rem;
+      font-size: 1.15rem;
       font-weight: 800;
       margin: 0;
       background: linear-gradient(to right, #0B79FF, #8b5cf6);
@@ -74,11 +85,11 @@ export default function Header() {
       background-clip: text;
     }
 
-    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    .header-actions { display: flex; align-items: center; gap: 0.6rem; }
 
     .theme-toggle {
       display: flex; align-items: center; justify-content: center;
-      width: 2.5rem; height: 2.5rem;
+      width: 2rem; height: 2rem;
       border-radius: 9999px; border: 1px solid transparent;
       background-color: transparent; color: var(--text-muted);
       cursor: pointer; transition: all 0.2s;
@@ -92,7 +103,7 @@ export default function Header() {
     .user-menu-wrapper { position: relative; }
     .user-menu {
       display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.5rem 1rem;
+      padding: 0.35rem 0.85rem;
       background-color: var(--bg-secondary);
       border: 1px solid var(--header-border);
       border-radius: 9999px;
@@ -124,7 +135,7 @@ export default function Header() {
 
     .auth-buttons { display: flex; gap: 0.75rem; }
     .auth-btn {
-      padding: 0.5rem 1.25rem; border-radius: 0.5rem;
+      padding: 0.35rem 0.9rem; border-radius: 9999px;
       font-weight: 600; font-size: 0.875rem; text-decoration: none; transition: all 0.2s;
     }
     .login-btn { color: var(--text-main); }
@@ -134,13 +145,14 @@ export default function Header() {
 
     .mobile-menu-toggle {
       display: none; background: transparent; border: none;
-      color: var(--text-main); cursor: pointer; padding: 0.5rem;
+      color: var(--text-main); cursor: pointer; padding: 0.25rem;
     }
     .mobile-auth-menu {
       position: absolute; top: 100%; left: 0; width: 100%;
       background-color: var(--header-bg);
       border-bottom: 1px solid var(--header-border);
-      padding: 1rem;
+      border-radius: 0 0 1rem 1rem;
+      padding: 0.85rem 1rem 1rem;
       display: flex; flex-direction: column; gap: 0.75rem;
       box-shadow: var(--shadow-lg); animation: slideDown 0.2s ease-out;
     }
@@ -151,7 +163,14 @@ export default function Header() {
     @media (max-width: 768px) {
       .auth-buttons { display: none; }
       .mobile-menu-toggle { display: block; }
-      .header-content { padding: 0 1rem; }
+      .site-header {
+        width: calc(100% - 1rem);
+        top: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .header-content { padding: 0 0.95rem; height: 3.15rem; }
+      .brand-name { font-size: 1.05rem; }
     }
   `;
 
@@ -160,6 +179,33 @@ export default function Header() {
       console.warn('Supabase client not available');
       return;
     }
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const updateHeaderVisibility = () => {
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY;
+      const pastTop = currentScrollY > 80;
+
+      if (isUserMenuOpen() || isMobileMenuOpen() || !pastTop) {
+        setIsHeaderHidden(false);
+      } else {
+        setIsHeaderHidden(scrollingDown);
+      }
+
+      lastScrollY = currentScrollY;
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateHeaderVisibility);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     // Load user from localStorage immediately
     const storedUser = localStorage.getItem('user');
@@ -215,6 +261,7 @@ export default function Header() {
 
     // Cleanup
     onCleanup(() => {
+      window.removeEventListener('scroll', handleScroll);
       subscription.unsubscribe();
     });
   });
@@ -356,6 +403,7 @@ export default function Header() {
   };
 
   const toggleUserMenu = () => {
+    setIsHeaderHidden(false);
     setIsUserMenuOpen(!isUserMenuOpen());
   };
 
@@ -364,11 +412,12 @@ export default function Header() {
   };
 
   const toggleMobileMenu = () => {
+    setIsHeaderHidden(false);
     setIsMobileMenuOpen(!isMobileMenuOpen());
   };
 
   return (
-    <header class="site-header">
+    <header class={`site-header ${isHeaderHidden() ? 'is-hidden' : ''}`}>
       <div class="header-content">
         {/* Left side - Logo/Brand */}
         <div class="logo-section">

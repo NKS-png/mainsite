@@ -3,6 +3,7 @@ import { supabase, createSupabaseServerClient } from '../lib/supabase';
 import '../styles/global.css';
 import Header from '../components/Header.tsx';
 import Comments from '../components/Comments.tsx';
+import ReelShowcase from '../components/ReelShowcase.astro';
 import SEO from '../components/SEO.astro';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
@@ -17,7 +18,7 @@ if (supabase) {
       .from('uploads')
       .select('*')
       .eq('public', true)
-      .limit(6);
+      
     uploads = data || [];
 
     // Get video items specifically for hero rotation
@@ -26,7 +27,7 @@ if (supabase) {
       .select('*')
       .eq('public', true)
       .like('mime', 'video/%')
-      .limit(10); // Get up to 10 videos for rotation
+      ;
     videoUploads = videos || [];
   } catch (error) {
     console.error('Failed to fetch portfolio items:', error);
@@ -34,13 +35,17 @@ if (supabase) {
 }
 
 // --- REEL FEED DATA PROCESSING ---
-const { data: reelUploads, error: reelError } = await supabase
-	.from('uploads')
-	.select('*')
-	.eq('public', true)
-	.order('created_at', { ascending: false });
+let reelUploads = [];
+if (supabase) {
+  const { data, error: reelError } = await supabase
+    .from('uploads')
+    .select('*')
+    .eq('public', true)
+    .order('created_at', { ascending: false });
 
-if (reelError) console.error('Supabase Error:', reelError);
+  reelUploads = data || [];
+  if (reelError) console.error('Supabase Error:', reelError);
+}
 
 // --- STRICT BUCKET MAPPING FOR REELS ---
 const allReelItems = (reelUploads || []).map((item) => {
@@ -124,6 +129,14 @@ const portfolioItems = uploads.map((item, index) => ({
   description: '',
   mime: item.mime
 }));
+
+const showcaseSource = videoUploads[0] || portfolioItems[0] || null;
+const showcaseMedia = showcaseSource ? {
+  src: showcaseSource.thumbnail || showcaseSource.src || `${supabaseUrl}/storage/v1/object/public/${showcaseSource.bucket}/${encodeURIComponent(showcaseSource.path)}`,
+  mime: showcaseSource.mime || 'image/jpeg',
+  title: showcaseSource.title || showcaseSource.filename || 'Featured Reel',
+  category: showcaseSource.bucket === 'video_editing' ? 'Video Editing' : showcaseSource.bucket === 'animation' ? 'Animation' : 'Digital Art'
+} : null;
 ---
 
 <html lang="en">
@@ -936,30 +949,62 @@ const portfolioItems = uploads.map((item, index) => ({
         right: 20px;
         transform: translateY(-50%);
         z-index: 9999;
-        transition: all 0.3s ease;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease;
+        will-change: transform, opacity;
+      }
+
+      .wipp-floating-btn.is-hidden {
+        transform: translate3d(130px, -50%, 0) scale(0.92);
+        opacity: 0;
+        pointer-events: none;
+        filter: blur(2px);
       }
 
       .wipp-btn-link {
         display: block;
-        background: linear-gradient(135deg, var(--primary), var(--accent));
         color: #fff;
         text-decoration: none;
-        border-radius: 50px;
+        border-radius: 999px;
         padding: 16px 24px;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.4);
-        transition: all 0.3s ease;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
         position: relative;
         overflow: hidden;
-        border: 3px solid rgba(255,255,255,0.3);
+        isolation: isolate;
+        border: 1px solid rgba(255,255,255,0.22);
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 1px;
+        animation: wippPopIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both, wippFloat 6s ease-in-out 1s infinite;
+      }
+
+      .wipp-btn-link::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(255,255,255,0.55), transparent 34%),
+          radial-gradient(circle at 80% 25%, rgba(255,255,255,0.24), transparent 28%),
+          linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 40%, rgba(255,255,255,0.12));
+        backdrop-filter: blur(22px) saturate(180%);
+        -webkit-backdrop-filter: blur(22px) saturate(180%);
+        border-radius: inherit;
+        z-index: -2;
+      }
+
+      .wipp-btn-link::after {
+        content: '';
+        position: absolute;
+        inset: 1px;
+        border-radius: inherit;
+        background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.02) 36%, rgba(255,255,255,0.08));
+        z-index: -1;
       }
 
       .wipp-btn-link:hover {
-        transform: translateY(-3px) scale(1.1);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-        border-color: rgba(255,255,255,0.6);
+        transform: translateY(-6px) scale(1.08);
+        box-shadow: 0 22px 55px rgba(0,0,0,0.28);
+        border-color: rgba(255,255,255,0.42);
       }
 
       .wipp-btn-content {
@@ -974,7 +1019,7 @@ const portfolioItems = uploads.map((item, index) => ({
 
       .wipp-icon {
         font-size: 22px;
-        animation: pulse 2s infinite;
+        animation: pulse 2.4s infinite;
         filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
       }
 
@@ -1015,6 +1060,30 @@ const portfolioItems = uploads.map((item, index) => ({
         transform: translateY(-50%) translateX(-8px);
       }
 
+      @keyframes wippPopIn {
+        0% {
+          opacity: 0;
+          transform: translate3d(120px, -50%, 0) scale(0.7) rotate(8deg);
+        }
+        65% {
+          opacity: 1;
+          transform: translate3d(-8px, -50%, 0) scale(1.05) rotate(-2deg);
+        }
+        100% {
+          opacity: 1;
+          transform: translate3d(0, -50%, 0) scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes wippFloat {
+        0%, 100% {
+          translate: 0 0;
+        }
+        50% {
+          translate: 0 -4px;
+        }
+      }
+
       @keyframes pulse {
         0%, 100% {
           transform: scale(1);
@@ -1051,7 +1120,6 @@ const portfolioItems = uploads.map((item, index) => ({
         
         .wipp-btn-link {
           padding: 14px 20px;
-          border-width: 2px;
         }
         
         .wipp-btn-content {
@@ -1196,118 +1264,7 @@ const portfolioItems = uploads.map((item, index) => ({
       </div>
     </section>
 
-    <!-- Reel Feed Section -->
-    <section class="reel-feed-section">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">The Reel Feed</h2>
-          <p class="section-subtitle">Scroll to Watch</p>
-        </div>
-
-        <div class="reel-feed-layout">
-          <!-- Left Sidebar -->
-          <div class="reel-sidebar left-sidebar">
-            <div class="sidebar-content">
-              <div class="info-card">
-                <h3>🎨 NKScreates</h3>
-                <p>Professional digital artist specializing in animation, video editing, and creative design.</p>
-              </div>
-              
-              <div class="info-card">
-                <h4>✨ Services</h4>
-                <ul>
-                  <li>Digital Art & Illustration</li>
-                  <li>2D/3D Animation</li>
-                  <li>Video Editing & Motion Graphics</li>
-                  <li>Logo & Brand Design</li>
-                </ul>
-              </div>
-
-              <div class="info-card">
-                <h4>🏆 Experience</h4>
-                <p>5+ years creating stunning visuals for clients worldwide. From concept to completion, bringing your vision to life.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Center Reel -->
-          <div class="reel-center">
-            <div class="reels-wrapper" id="reelsWrapper">
-              <div class="mute-toggle" onclick="toggleMuteAll()">
-                <span id="muteIcon">🔇</span> Unmute
-              </div>
-              <div class="controls-layer">
-                <button class="action-btn expand-btn" id="expandBtn" title="Fullscreen">⛶</button>
-              </div>
-
-              <div class="reels-container" id="reelsContainer">
-                {infiniteReels.map((item, index) => (
-                  <div class="reel-item" data-index={index}>
-                    {item.mime.startsWith('video/') ? (
-                      <video
-                        class="reel-video"
-                        src={item.src}
-                        loop
-                        playsinline
-                        muted
-                        preload="metadata"
-                      ></video>
-                    ) : (
-                      <img
-                        class="reel-video"
-                        src={item.src}
-                        alt={item.title}
-                        style="object-fit: contain; background: #000;"
-                      />
-                    )}
-                    <div class="reel-ui">
-                      <span class="reel-tag">{item.category}</span>
-                      <!-- File name removed -->
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Sidebar -->
-          <div class="reel-sidebar right-sidebar">
-            <div class="sidebar-content">
-              <div class="info-card">
-                <h4>📞 Get In Touch</h4>
-                <p>Ready to start your project? Let's discuss your creative needs.</p>
-                <a href="/services" class="sidebar-btn">View Services</a>
-              </div>
-
-              <div class="info-card">
-                <h4>🌐 Follow Me</h4>
-                <div class="social-links">
-                  <a href="https://www.youtube.com/@itsnks7418" target="_blank">YouTube</a>
-                  <a href="https://www.instagram.com/nks_919/" target="_blank">Instagram</a>
-                  <a href="https://www.fiverr.com/nksbro" target="_blank">Fiverr</a>
-                </div>
-              </div>
-
-              <div class="info-card">
-                <h4>💡 Why Choose NKS?</h4>
-                <ul>
-                  <li>Fast turnaround times</li>
-                  <li>Unlimited revisions</li>
-                  <li>Professional quality</li>
-                  <li>Competitive pricing</li>
-                </ul>
-              </div>
-
-              <div class="info-card">
-                <h4>☕ Support</h4>
-                <p>Enjoying the content? Support the creator!</p>
-                <a href="https://buymeacoffee.com/nikhilasraq" target="_blank" class="sidebar-btn">Buy Me Coffee</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <ReelShowcase showcaseMedia={showcaseMedia} infiniteReels={infiniteReels} />
 
 
     <!-- Featured Work -->
@@ -1409,6 +1366,38 @@ const portfolioItems = uploads.map((item, index) => ({
     <!-- Loading Screen Script -->
     <script>
       // Welcome Popup Functions
+      function initWippFloatingButton() {
+        const wippButton = document.getElementById('wippFloatingBtn');
+        if (!wippButton) {
+          return;
+        }
+
+        let lastScrollY = window.scrollY;
+        let ticking = false;
+
+        const updateWippVisibility = () => {
+          const currentScrollY = window.scrollY;
+          const scrollingDown = currentScrollY > lastScrollY;
+          const shouldHide = currentScrollY > 80 && scrollingDown;
+
+          wippButton.classList.toggle('is-hidden', shouldHide);
+          lastScrollY = currentScrollY;
+          ticking = false;
+        };
+
+        const onScroll = () => {
+          if (!ticking) {
+            window.requestAnimationFrame(updateWippVisibility);
+            ticking = true;
+          }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        const cleanup = () => window.removeEventListener('scroll', onScroll);
+        window.addEventListener('beforeunload', cleanup, { once: true });
+      }
+
       function showWelcomePopup() {
         // Check if popup has already been shown in this session
         if (localStorage.getItem('welcomePopupShown') === 'true') {
@@ -1466,6 +1455,8 @@ const portfolioItems = uploads.map((item, index) => ({
         // Performance detection
         const isMobile = window.innerWidth <= 768;
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        initWippFloatingButton();
 
         const loadingScreen = document.getElementById('loading-screen');
         const loadingGif = document.getElementById('loading-gif');

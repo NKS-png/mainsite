@@ -1,0 +1,1301 @@
+---
+const { showcaseMedia, infiniteReels } = Astro.props;
+const modalReels = infiniteReels && infiniteReels.length ? [...infiniteReels, ...infiniteReels] : [];
+---
+
+<section class="reel-showcase-section">
+  <div class="reel-showcase-orbs" aria-hidden="true">
+    <span class="ambient-orb ambient-orb-a"></span>
+    <span class="ambient-orb ambient-orb-b"></span>
+    <span class="ambient-orb ambient-orb-c"></span>
+  </div>
+
+  <div class="reel-showcase-shell">
+    <div class="reel-showcase-grid">
+      <div class="reel-showcase-main" data-reveal>
+        <div class="reel-kicker">Reel Feed / Portfolio Showcase</div>
+        <div class="reel-heading-block">
+          <h2>Cinematic motion with a clean, premium frame.</h2>
+          <p>
+            A focused showcase built around the reel itself, with minimal supporting UI, soft glass surfaces,
+            and a luxury dark aesthetic that keeps the visual hierarchy clear.
+          </p>
+        </div>
+
+        <div class="reel-stage">
+          <div class="reel-stage-frame">
+            {showcaseMedia ? (
+              showcaseMedia.mime?.startsWith('video/') ? (
+                <video id="reelPreviewVideo" autoplay muted loop playsinline preload="none" poster={showcaseMedia.poster || undefined}>
+                  <source src={showcaseMedia.src} type={showcaseMedia.mime} />
+                </video>
+              ) : (
+                <img src={showcaseMedia.src} alt={showcaseMedia.title} loading="lazy" />
+              )
+            ) : (
+              <div class="reel-stage-placeholder">
+                <span>Featured reel preview will appear here.</span>
+              </div>
+            )}
+            <div class="reel-stage-gradient"></div>
+            <div class="reel-stage-noise"></div>
+          </div>
+
+          <div class="reel-stage-overlay">
+            <div class="reel-chip-row">
+              <span class="reel-chip">Autoplay preview</span>
+              <span class="reel-chip reel-chip-alt">Muted cinematic loop</span>
+            </div>
+
+            <div class="reel-stage-copy">
+              <div>
+                <h3>{showcaseMedia?.title || 'Featured Creative Reel'}</h3>
+                <p>{showcaseMedia?.category || 'Creative Direction'}</p>
+              </div>
+              <div class="reel-action-group">
+                <button class="reel-play-badge" id="reelPlayToggle" type="button" aria-label="Play or pause reel preview">
+                  <span class="reel-play-icon" id="reelPlayIcon">▶</span>
+                  <span id="reelPlayLabel">Play</span>
+                </button>
+                <button class="reel-fullscreen-link" id="openReelModalBtn" type="button" aria-label="Open infinite reel scroll mode">
+                  <span class="reel-fullscreen-icon">⤢</span>
+                  <span>Fullscreen reel mode</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fullscreen modal with infinite reel scroll -->
+        <div class="reel-modal" id="reelModal" aria-hidden="true">
+          <div class="reel-modal-backdrop" id="reelModalBackdrop"></div>
+          <div class="reel-modal-shell" role="dialog" aria-modal="true">
+            <div class="reel-modal-controls">
+              <button id="modalCloseBtn" class="modal-close">✕</button>
+              <button id="modalNextBtn" class="modal-next" aria-label="Next reel">⏭</button>
+              <button id="modalMuteToggle" class="modal-mute">🔇</button>
+            </div>
+            <div class="modal-reels-wrapper" id="modalReelsWrapper">
+              <div class="modal-reels-container" id="modalReelsContainer">
+                {modalReels.length ? (
+                  modalReels.map((item, index) => (
+                    <div class="modal-reel-item" data-id={item.id}>
+                      {item.mime && item.mime.startsWith('video/') ? (
+                        <video class="modal-reel-video" data-index={index} src={item.src} loop playsinline muted preload="none"></video>
+                      ) : (
+                        <img src={item.src} alt={item.title} data-index={index} />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div class="modal-empty">No reels available.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reel-metrics" data-reveal>
+          <div class="reel-metric-card">
+            <span>Focus</span>
+            <strong>Reel-first composition</strong>
+          </div>
+          <div class="reel-metric-card">
+            <span>Motion</span>
+            <strong>Gentle hover + reveal</strong>
+          </div>
+          <div class="reel-metric-card">
+            <span>Style</span>
+            <strong>Dark luxury + glass</strong>
+          </div>
+        </div>
+      </div>
+
+      <aside class="reel-showcase-aside" data-reveal>
+        <article class="glass-card intro-card" data-reveal>
+          <div class="card-head">
+            <span class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Z" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4 21c1.7-3.7 4.7-5.5 8-5.5s6.3 1.8 8 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div>
+              <span class="card-kicker">Creator intro</span>
+              <h3>NKScreates</h3>
+            </div>
+          </div>
+          <p>
+            Digital artist and motion designer crafting polished reels, visuals, and brand stories with a cinematic edge.
+          </p>
+          <div class="pill-row">
+            <span>Animation</span>
+            <span>Video edits</span>
+            <span>Digital art</span>
+          </div>
+        </article>
+
+        <article class="glass-card" data-reveal>
+          <div class="card-head">
+            <span class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 7h14M5 12h9M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M17 11.5v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M14.5 16l2.5 2.5 2.5-2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <span class="card-kicker">Services</span>
+              <h3>What I make</h3>
+            </div>
+          </div>
+          <ul class="clean-list">
+            <li>Digital art and illustration</li>
+            <li>2D and 3D animation</li>
+            <li>Video editing and motion graphics</li>
+          </ul>
+        </article>
+
+        <article class="glass-card" data-reveal>
+          <div class="card-head">
+            <span class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 12.5V7.8c0-1.3 1-2.3 2.3-2.3h5.4C16 5.5 17 6.5 17 7.8v8.4c0 1.3-1 2.3-2.3 2.3H9.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M7 12.5 3.8 9.3M7 12.5 3.8 15.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 10.2h5M10 13.8h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div>
+              <span class="card-kicker">Social links</span>
+              <h3>Where to find me</h3>
+            </div>
+          </div>
+          <div class="link-stack">
+            <a href="https://www.youtube.com/@itsnks7418" target="_blank" rel="noopener noreferrer">YouTube</a>
+            <a href="https://www.instagram.com/nks_919/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://www.fiverr.com/nksbro" target="_blank" rel="noopener noreferrer">Fiverr</a>
+          </div>
+        </article>
+
+        <article class="glass-card cta-card" data-reveal>
+          <div class="card-head">
+            <span class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.8"/>
+                <path d="m7 8 5 4 5-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <span class="card-kicker">Contact</span>
+              <h3>Start a project</h3>
+            </div>
+          </div>
+          <p>
+            Need a custom reel, brand visual, or animated asset? Let us build something precise and premium.
+          </p>
+          <div class="cta-stack">
+            <a href="/services" class="cta-button">View services</a>
+            <a href="/about" class="cta-link">Learn more about NKScreates</a>
+          </div>
+        </article>
+      </aside>
+    </div>
+  </div>
+
+  <style>
+    .reel-showcase-section {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(4rem, 7vw, 7rem) 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(74, 144, 226, 0.18), transparent 28%),
+        radial-gradient(circle at 82% 12%, rgba(212, 175, 55, 0.12), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(29, 78, 216, 0.1), transparent 35%),
+        linear-gradient(180deg, #04060c 0%, #08101d 48%, #05070d 100%);
+      color: #f8fafc;
+    }
+
+    .reel-showcase-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 92%);
+      pointer-events: none;
+    }
+
+    .reel-showcase-orbs {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(26px);
+      opacity: 0.48;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+
+    .ambient-orb-a {
+      width: 18rem;
+      height: 18rem;
+      left: -4rem;
+      top: 4rem;
+      background: radial-gradient(circle, rgba(67, 147, 255, 0.24), rgba(67, 147, 255, 0));
+    }
+
+    .ambient-orb-b {
+      width: 16rem;
+      height: 16rem;
+      right: 6%;
+      top: 18%;
+      background: radial-gradient(circle, rgba(214, 175, 78, 0.16), rgba(214, 175, 78, 0));
+      animation-delay: -3s;
+    }
+
+    .ambient-orb-c {
+      width: 14rem;
+      height: 14rem;
+      right: 22%;
+      bottom: -3rem;
+      background: radial-gradient(circle, rgba(12, 74, 110, 0.24), rgba(12, 74, 110, 0));
+      animation-delay: -6s;
+    }
+
+    .reel-showcase-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 0 clamp(1rem, 3vw, 2rem);
+    }
+
+    .reel-showcase-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.8fr);
+      gap: clamp(1.25rem, 2.4vw, 2rem);
+      align-items: start;
+    }
+
+    .reel-showcase-main,
+    .reel-showcase-aside {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reel-showcase-main.is-visible,
+    .reel-showcase-aside.is-visible,
+    .reel-metrics.is-visible,
+    .glass-card.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reel-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      color: rgba(226, 232, 240, 0.82);
+      background: rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(16px);
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .reel-heading-block {
+      max-width: 52rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .reel-heading-block h2 {
+      margin: 0;
+      font-size: clamp(2.1rem, 4vw, 4.2rem);
+      line-height: 0.97;
+      letter-spacing: -0.04em;
+      color: #f8fafc;
+    }
+
+    .reel-heading-block p {
+      margin: 1rem 0 0;
+      max-width: 42rem;
+      color: rgba(226, 232, 240, 0.72);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .reel-stage {
+      position: relative;
+      padding: 1rem;
+      border-radius: 34px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.86));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(96, 165, 250, 0.08) inset,
+        0 0 60px rgba(59, 130, 246, 0.12);
+      overflow: hidden;
+    }
+
+    .reel-stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(212, 175, 55, 0.05) 42%, transparent 72%);
+      pointer-events: none;
+    }
+
+    .reel-stage-frame {
+      position: relative;
+      min-height: clamp(22rem, 55vw, 44rem);
+      aspect-ratio: 16 / 10;
+      border-radius: 28px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(96, 165, 250, 0.18), transparent 30%),
+        radial-gradient(circle at 78% 18%, rgba(214, 175, 78, 0.12), transparent 24%),
+        #020617;
+      transform: translateZ(0);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .reel-stage-frame video,
+    .reel-stage-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.01);
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+    }
+
+    .reel-stage:hover .reel-stage-frame video,
+    .reel-stage:hover .reel-stage-frame img {
+      transform: scale(1.05);
+      filter: saturate(1.08) contrast(1.03);
+    }
+
+    .reel-stage-placeholder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      color: rgba(226, 232, 240, 0.7);
+      font-size: 1rem;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .reel-stage-gradient,
+    .reel-stage-noise {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .reel-stage-gradient {
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.02) 0%, rgba(2, 6, 23, 0.05) 42%, rgba(2, 6, 23, 0.7) 100%),
+        linear-gradient(90deg, rgba(2, 6, 23, 0.38), transparent 30%, transparent 70%, rgba(2, 6, 23, 0.32));
+    }
+
+    .reel-stage-noise {
+      opacity: 0.18;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.16) 1px, transparent 0);
+      background-size: 18px 18px;
+      mix-blend-mode: overlay;
+    }
+
+    .reel-stage-overlay {
+      position: absolute;
+      left: 1.35rem;
+      right: 1.35rem;
+      bottom: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      pointer-events: none;
+    }
+
+    .reel-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .reel-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      color: rgba(248, 250, 252, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .reel-chip-alt {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(96, 165, 250, 0.16);
+    }
+
+    .reel-stage-copy {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.18), rgba(2, 6, 23, 0.46));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 1rem 1.1rem;
+      backdrop-filter: blur(16px);
+    }
+
+    .reel-action-group {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex: 0 0 auto;
+      pointer-events: auto; /* allow clicks through overlay */
+    }
+
+    .reel-stage-copy h3 {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.8vw, 1.7rem);
+      line-height: 1.1;
+      color: #fff;
+    }
+
+    .reel-stage-copy p {
+      margin: 0.35rem 0 0;
+      color: rgba(226, 232, 240, 0.72);
+      font-size: 0.93rem;
+      line-height: 1.5;
+    }
+
+    .reel-play-badge,
+    .reel-fullscreen-link {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 3rem;
+      padding: 0.5rem 0.95rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(59, 130, 246, 0.18));
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.08) inset;
+      color: #f8fafc;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transform-origin: center;
+      animation: playPulse 2.6s ease-in-out infinite;
+    }
+
+    .reel-play-badge {
+      cursor: pointer;
+    }
+
+    .reel-fullscreen-link {
+      text-decoration: none;
+      background: linear-gradient(135deg, rgba(214, 175, 78, 0.16), rgba(255, 255, 255, 0.1));
+    }
+
+    .reel-fullscreen-link:hover,
+    .reel-play-badge:hover {
+      transform: translateY(-1px) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .reel-play-icon {
+      width: 1.65rem;
+      height: 1.65rem;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 0.78rem;
+    }
+
+    .reel-fullscreen-icon {
+      width: 1.65rem;
+      height: 1.65rem;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
+    .reel-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.95rem;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reel-metric-card {
+      padding: 1rem 1.05rem;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
+    }
+
+    .reel-metric-card span,
+    .card-kicker {
+      display: block;
+      color: rgba(226, 232, 240, 0.54);
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+    }
+
+    .reel-metric-card strong {
+      color: #fff;
+      font-size: 0.96rem;
+      line-height: 1.4;
+      font-weight: 650;
+    }
+
+    .reel-showcase-aside {
+      position: sticky;
+      top: 6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+    }
+
+    .glass-card {
+      opacity: 0;
+      transform: translateY(18px);
+      padding: 1.15rem 1.15rem 1.1rem;
+      border-radius: 24px;
+      background: rgba(8, 12, 24, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px) saturate(140%);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+      transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(96, 165, 250, 0.22);
+      box-shadow: 0 22px 52px rgba(0, 0, 0, 0.34), 0 0 42px rgba(59, 130, 246, 0.08);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .card-icon {
+      width: 2.65rem;
+      height: 2.65rem;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(214, 175, 78, 0.12));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #dce9ff;
+    }
+
+    .card-icon svg {
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
+    .glass-card h3 {
+      margin: 0;
+      color: #fff;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .glass-card p {
+      margin: 0;
+      color: rgba(226, 232, 240, 0.74);
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .pill-row span {
+      padding: 0.42rem 0.72rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(248, 250, 252, 0.82);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .clean-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .clean-list li {
+      position: relative;
+      padding-left: 1rem;
+      color: rgba(226, 232, 240, 0.78);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .clean-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.65rem;
+      width: 0.38rem;
+      height: 0.38rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #60a5fa, #d6af4e);
+      box-shadow: 0 0 14px rgba(96, 165, 250, 0.35);
+    }
+
+    .link-stack {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .link-stack a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 0.9rem;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      text-decoration: none;
+      transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+    }
+
+    .link-stack a:hover {
+      transform: translateX(4px);
+      border-color: rgba(96, 165, 250, 0.2);
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .cta-stack {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3rem;
+      padding: 0.8rem 1rem;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #60a5fa, #d6af4e);
+      color: #04060c;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.16);
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 34px rgba(59, 130, 246, 0.2);
+    }
+
+    .cta-link {
+      color: rgba(226, 232, 240, 0.75);
+      text-decoration: none;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .cta-link:hover {
+      color: #fff;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(0, -18px, 0) scale(1.04); }
+    }
+
+    @keyframes playPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.08); }
+      50% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+    }
+
+    @media (max-width: 1100px) {
+      .reel-showcase-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .reel-showcase-aside {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .reel-showcase-section {
+        padding: 3.25rem 0;
+      }
+
+      .reel-heading-block h2 {
+        font-size: clamp(1.9rem, 8vw, 2.8rem);
+      }
+
+      .reel-stage {
+        padding: 0.8rem;
+        border-radius: 28px;
+      }
+
+      .reel-stage-frame {
+        min-height: 18rem;
+        aspect-ratio: 4 / 5;
+        border-radius: 22px;
+      }
+
+      .reel-stage-overlay {
+        left: 0.9rem;
+        right: 0.9rem;
+        bottom: 0.9rem;
+      }
+
+      .reel-stage-copy {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .reel-action-group {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .reel-play-badge,
+      .reel-fullscreen-link {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .reel-metrics,
+      .reel-showcase-aside {
+        grid-template-columns: 1fr;
+      }
+
+      .glass-card {
+        padding: 1rem;
+        border-radius: 22px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-orb,
+      .reel-play-badge {
+        animation: none;
+      }
+
+      .reel-showcase-main,
+      .reel-showcase-aside,
+      .reel-metrics,
+      .glass-card,
+      .reel-stage-frame video,
+      .reel-stage-frame img,
+      .glass-card,
+      .link-stack a,
+      .cta-button {
+        transition: none;
+      }
+    }
+
+    /* Fullscreen modal styles */
+    .reel-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 2147483000; /* extremely high to sit above all UI */
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    :global(body.reel-modal-open) {
+      overflow: hidden;
+    }
+
+    :global(body.reel-modal-open) > *:not(.reel-modal) {
+      visibility: hidden;
+    }
+
+    .reel-modal.show {
+      display: flex;
+    }
+
+    .reel-modal-backdrop {
+      position: absolute; inset: 0; background: rgba(2,6,23,0.88); backdrop-filter: blur(8px); z-index: 2147483000; pointer-events: auto;
+    }
+
+    .reel-modal-shell {
+      position: relative; z-index: 2147483001; width: 100vw; height: 100dvh; display:flex; align-items:center; justify-content:center; pointer-events: auto;
+    }
+
+    .reel-modal-controls { position: fixed; top: 20px; right: 20px; z-index: 2147483647; display: flex; gap: 10px; align-items: center; pointer-events: auto; }
+    .modal-close, .modal-next, .modal-mute { background: rgba(0, 0, 0, 0.85); border: 2px solid rgba(255, 255, 255, 0.25); color: #ffffff; padding: 14px 16px; border-radius: 16px; cursor: pointer; font-size: 1.3rem; font-weight: 800; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); backdrop-filter: blur(16px) saturate(180%); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; min-width: 50px; min-height: 50px; }
+    .modal-close:hover, .modal-next:hover, .modal-mute:hover { background: rgba(0, 0, 0, 0.95); border-color: rgba(255, 255, 255, 0.5); transform: scale(1.15) translateY(-2px); box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15); }
+    .modal-close:active, .modal-next:active, .modal-mute:active { transform: scale(0.93); }
+    .modal-close { background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.6)); }
+    .modal-close:hover { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); border-color: rgba(255, 110, 110, 0.6); }
+
+    .modal-reels-wrapper { position: relative; width: 100vw; height: 100dvh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .modal-reels-container { width: 100vw; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; display:block; scroll-behavior: auto; overscroll-behavior: contain; }
+    .modal-reel-item { width: 100vw; height: 100dvh; scroll-snap-align: center; scroll-snap-stop: always; display:flex; align-items:center; justify-content:center; background: #000; cursor: pointer; }
+    .modal-reel-item.active { outline: none; }
+    .modal-reel-item video, .modal-reel-item img { width: 100vw; height: 100dvh; display:block; z-index:2147483002; background: #000; }
+    .modal-reel-item video { object-fit: contain; }
+    .modal-reel-item img { object-fit: contain; }
+    .modal-empty { color: #fff; padding: 2rem; text-align:center; }
+  </style>
+
+  <script is:inline>
+    const initReelShowcaseReveal = () => {
+      const revealNodes = document.querySelectorAll('[data-reveal]');
+      if (!revealNodes.length) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+
+      revealNodes.forEach((node) => observer.observe(node));
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initReelShowcaseReveal);
+    } else {
+      initReelShowcaseReveal();
+    }
+
+    const initReelPreviewControls = () => {
+      const video = document.getElementById('reelPreviewVideo');
+      const toggle = document.getElementById('reelPlayToggle');
+      const icon = document.getElementById('reelPlayIcon');
+      const label = document.getElementById('reelPlayLabel');
+
+      if (!video || !toggle || !icon || !label) return;
+
+      const syncState = () => {
+        const isPlaying = !video.paused;
+        icon.textContent = isPlaying ? '❚❚' : '▶';
+        label.textContent = isPlaying ? 'Pause' : 'Play';
+      };
+
+      toggle.addEventListener('click', async () => {
+        if (video.paused) {
+          try {
+            await video.play();
+          } catch (error) {
+            console.warn('Preview playback failed:', error);
+          }
+        } else {
+          video.pause();
+        }
+        syncState();
+      });
+
+      video.addEventListener('play', syncState);
+      video.addEventListener('pause', syncState);
+      syncState();
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initReelPreviewControls);
+    } else {
+      initReelPreviewControls();
+    }
+
+    // Modal infinite reel logic
+    const initReelModal = () => {
+      const openBtn = document.getElementById('openReelModalBtn');
+      const modal = document.getElementById('reelModal');
+      const backdrop = document.getElementById('reelModalBackdrop');
+      const closeBtn = document.getElementById('modalCloseBtn');
+      const nextBtn = document.getElementById('modalNextBtn');
+      const muteBtn = document.getElementById('modalMuteToggle');
+      const container = document.getElementById('modalReelsContainer');
+
+      if (!openBtn || !modal || !container) return;
+
+      if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+      }
+
+      let isMuted = true;
+      let activeVideo = null;
+      let modalObserver = null;
+      let recentering = false;
+      let pageLock = false;
+      let touchStartY = 0;
+      let touchStartX = 0;
+      let activeIndex = 0;
+      const getModalItems = () => Array.from(modal.querySelectorAll('.modal-reel-item'));
+
+      const requestNativeFullscreen = async () => {
+        try {
+          const el = modal;
+          if (!el) return;
+
+          const doc = document;
+          const isAlreadyFullscreen = !!(doc.fullscreenElement || doc.webkitFullscreenElement);
+          if (isAlreadyFullscreen) return;
+
+          if (el.requestFullscreen) {
+            await el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            // Safari
+            el.webkitRequestFullscreen();
+          }
+        } catch (error) {
+          // Fullscreen API can fail depending on browser / settings.
+          console.warn('Fullscreen request failed:', error);
+        }
+      };
+
+      const exitNativeFullscreen = async () => {
+        try {
+          const doc = document;
+          if (doc.exitFullscreen && doc.fullscreenElement) {
+            await doc.exitFullscreen();
+          } else if (doc.webkitExitFullscreen && doc.webkitFullscreenElement) {
+            doc.webkitExitFullscreen();
+          }
+        } catch (error) {
+          // ignore
+        }
+      };
+
+      const getItemHeight = () => container.clientHeight || window.innerHeight;
+
+      const getMiddleStartIndex = () => {
+        const items = getModalItems();
+        return items.length ? Math.floor(items.length / 2) : 0;
+      };
+
+      const centerModalScroll = () => {
+        const items = getModalItems();
+        if (!items.length) return;
+
+        const middleStart = getMiddleStartIndex();
+        const middleTarget = items[middleStart];
+        if (!middleTarget) return;
+
+        const targetTop = middleTarget.offsetTop;
+        container.scrollTop = targetTop;
+        activeIndex = middleStart;
+      };
+
+      const alignToActiveItem = () => {
+        const items = getModalItems();
+        const currentItem = items[activeIndex];
+        if (!currentItem) return;
+        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+
+      const moveByPage = (direction) => {
+        if (pageLock) return;
+        pageLock = true;
+
+        const items = getModalItems();
+        if (!items.length) {
+          pageLock = false;
+          return;
+        }
+
+        const nextIndex = Math.max(0, Math.min(items.length - 1, activeIndex + direction));
+        const nextItem = items[nextIndex];
+        if (nextItem) {
+          activeIndex = nextIndex;
+          nextItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          window.setTimeout(() => {
+            pageLock = false;
+          }, 500);
+        } else {
+          pageLock = false;
+        }
+      };
+
+      const recenterInfiniteTrack = () => {
+        if (modal.classList.contains('show')) {
+          const items = getModalItems();
+          if (!items.length) return;
+
+          const scrollTop = container.scrollTop;
+          const itemHeight = getItemHeight();
+          const halfBlock = items.length / 2;
+          const lowBoundary = itemHeight * Math.max(2, halfBlock * 0.4);
+          const highBoundary = itemHeight * Math.max(1, items.length - halfBlock * 0.6);
+
+          if (scrollTop < lowBoundary || scrollTop > highBoundary) {
+            if (recentering) return;
+            recentering = true;
+
+            const shift = Math.floor(halfBlock) * itemHeight;
+            container.scrollTop = scrollTop < lowBoundary
+              ? scrollTop + shift
+              : scrollTop - shift;
+
+            activeIndex = getMiddleStartIndex() + (activeIndex % Math.floor(halfBlock));
+
+            window.setTimeout(() => { recentering = false; }, 90);
+          }
+        }
+      };
+
+      const enforceScrollSnap = () => {
+        if (pageLock || recentering || !modal.classList.contains('show')) return;
+
+        const items = getModalItems();
+        if (!items.length) return;
+
+        const itemHeight = getItemHeight();
+        const currentScroll = container.scrollTop;
+        
+        // Find the nearest reel position
+        const nearestIndex = Math.round(currentScroll / itemHeight);
+        const targetScroll = nearestIndex * itemHeight;
+
+        // If we're not exactly on a snap point, snap to the nearest one with smooth animation
+        if (Math.abs(currentScroll - targetScroll) > 5) {
+          const currentItem = items[nearestIndex];
+          if (currentItem) {
+            currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          activeIndex = nearestIndex;
+        }
+      };
+
+      const playActiveMedia = () => {
+        const items = getModalItems();
+        const currentItem = items[activeIndex];
+        if (!currentItem) return;
+
+        const video = currentItem.querySelector('video');
+        if (!(video instanceof HTMLVideoElement)) {
+          activeVideo = null;
+          return;
+        }
+
+        activeVideo = video;
+        video.muted = isMuted;
+        video.play().catch(() => {
+          // If autoplay with sound is blocked, fall back to muted.
+          if (!video.muted) {
+            isMuted = true;
+            video.muted = true;
+            if (muteBtn) muteBtn.textContent = '🔇';
+            video.play().catch(() => {});
+          }
+        });
+      };
+
+      const openModal = () => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+        document.body.classList.add('reel-modal-open');
+        document.body.style.overflow = 'hidden';
+        initModalReels();
+        centerModalScroll();
+        // Must happen on user gesture (this click) to be allowed.
+        requestNativeFullscreen();
+        requestAnimationFrame(() => {
+          playActiveMedia();
+        });
+      };
+
+      const closeModal = () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden','true');
+        document.body.classList.remove('reel-modal-open');
+        document.body.style.overflow = '';
+        pageLock = false;
+        recentering = false;
+        exitNativeFullscreen();
+        
+        // Comprehensive cleanup to free memory
+        const videos = document.querySelectorAll('.modal-reel-video');
+        videos.forEach(v => {
+          try {
+            v.pause();
+            v.currentTime = 0;
+            v.src = '';
+            v.load();
+          } catch(e){}
+        });
+        
+        if (modalObserver) {
+          modalObserver.disconnect();
+          modalObserver = null;
+        }
+        
+        activeVideo = null;
+      };
+
+      openBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (backdrop) backdrop.addEventListener('click', closeModal);
+
+      if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+          isMuted = !isMuted;
+          muteBtn.textContent = isMuted ? '🔇' : '🔊';
+          document.querySelectorAll('.modal-reel-video').forEach(v => v.muted = isMuted);
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          if (!modal.classList.contains('show')) return;
+          moveByPage(1);
+          window.setTimeout(() => playActiveMedia(), 250);
+        });
+      }
+
+      container.addEventListener('wheel', (event) => {
+        if (!modal.classList.contains('show')) return;
+        event.preventDefault();
+        if (Math.abs(event.deltaY) < 10) return;
+        moveByPage(event.deltaY > 0 ? 1 : -1);
+      }, { passive: false });
+
+      container.addEventListener('touchstart', (event) => {
+        const touch = event.touches[0];
+        if (!touch) return;
+        touchStartY = touch.clientY;
+        touchStartX = touch.clientX;
+      }, { passive: true });
+
+      container.addEventListener('touchend', (event) => {
+        if (!modal.classList.contains('show')) return;
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+
+        const deltaY = touchStartY - touch.clientY;
+        const deltaX = Math.abs(touchStartX - touch.clientX);
+
+        if (Math.abs(deltaY) > 48 && Math.abs(deltaY) > deltaX) {
+          moveByPage(deltaY > 0 ? 1 : -1);
+        }
+      }, { passive: true });
+
+      container.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest('.modal-close') || target.closest('.modal-mute')) return;
+
+        if (activeVideo) {
+          if (activeVideo.paused) {
+            activeVideo.play().catch(() => {});
+          } else {
+            activeVideo.pause();
+          }
+        }
+      });
+
+      function initModalReels() {
+        const items = Array.from(document.querySelectorAll('.modal-reel-item'));
+        if (!items.length) return;
+
+        if (modalObserver) {
+          modalObserver.disconnect();
+          modalObserver = null;
+        }
+
+        modalObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const el = entry.target;
+            const media = el.querySelector('video, img');
+            if (entry.isIntersecting) {
+              el.classList.add('active');
+              if (media && media.tagName === 'VIDEO') {
+                activeVideo = media;
+                media.muted = isMuted;
+                media.currentTime = 0;
+                media.preload = 'auto';
+                media.play().catch(() => {
+                  // If autoplay with sound is blocked, fall back to muted.
+                  if (!media.muted) {
+                    isMuted = true;
+                    media.muted = true;
+                    if (muteBtn) muteBtn.textContent = '🔇';
+                    media.play().catch(() => {});
+                  }
+                });
+              }
+            } else {
+              el.classList.remove('active');
+              if (media && media.tagName === 'VIDEO') {
+                media.pause();
+              }
+            }
+          });
+        }, { threshold: 0.6, root: container });
+
+        items.forEach(i => modalObserver.observe(i));
+        container.addEventListener('scroll', enforceScrollSnap, { passive: true });
+        container.addEventListener('scroll', recenterInfiniteTrack, { passive: true });
+        container.addEventListener('scroll', alignToActiveItem, { passive: true });
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initReelModal);
+    } else {
+      initReelModal();
+    }
+  </script>
+</section>
